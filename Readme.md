@@ -1,7 +1,7 @@
 # Личный проект «Большое путешествие» [![Build status][travis-image]][travis-url]
 
 * Студент: [Дмитрий Неклюдов](https://up.htmlacademy.ru/ecmascript/11/user/991089).
-* Наставник: `Неизвестно`.
+* Наставник: [Владимир Чебаков](https://htmlacademy.ru/profile/id1100789).
 
 ---
 
