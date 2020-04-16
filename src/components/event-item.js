@@ -1,6 +1,4 @@
-import {formatTime} from '../util.js';
-import {castTimeFormat} from '../util.js';
-import {getDateTime} from '../util.js';
+import {formatTime, castTimeFormat, getDateTime, createElement} from '../util.js';
 
 const getDuration = (startDate, endDate) => {
   const diff = endDate.getTime() - startDate.getTime();
@@ -69,3 +67,26 @@ export const createEventItemTemplate = (eventItem) => {
   </li>`
   );
 };
+
+export default class EventItem {
+  constructor(eventItem) {
+    this._eventItem = eventItem;
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createEventItemTemplate(this._eventItem);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}

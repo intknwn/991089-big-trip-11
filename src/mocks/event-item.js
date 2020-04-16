@@ -13,10 +13,10 @@ const getRandomIntegerNumber = (min, max) => {
   return min + Math.floor(Math.random() * (max - min));
 };
 
-const createOffer = (type, index) => {
+const createOffer = (type) => {
   return {
     type,
-    name: `Option ${index}`,
+    name: type,
     price: getRandomIntegerNumber(0, 100),
   };
 };
@@ -24,12 +24,12 @@ const createOffer = (type, index) => {
 const createOffers = (number, type) => {
   return new Array(number)
     .fill(``)
-    .map((item, i) => createOffer(type, i + 1));
+    .map(() => createOffer(type));
 };
 
 const createDescription = (str) => str
   .split(`.`)
-  .filter((it) => it)
+  .filter((item) => item)
   .slice(0, getRandomIntegerNumber(1, 5))
   .join(``);
 

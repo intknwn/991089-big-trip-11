@@ -1,9 +1,8 @@
-import {formatTime} from '../util.js';
-import {getDateTime} from '../util.js';
+import {formatTime, getDateTime, createElement} from '../util.js';
 import {destinations} from '../mocks/event-item.js';
 
-const createDestinationsTemplate = (destArray) => {
-  return destArray.map((dest) => `<option value="${dest}"></option>`).join(`\n`);
+const createDestinationsTemplate = (destItems) => {
+  return destItems.map((dest) => `<option value="${dest}"></option>`).join(`\n`);
 };
 
 const createOffersTemplate = (offers) => {
@@ -35,7 +34,9 @@ const createImagesTemplate = (images) =>
   images.map((url) => `<img class="event__photo" src="${url}" alt="Event photo">`).join(`\n`);
 
 
-const createDestinationTemplate = (description, images) => {
+const createDestinationDescTemplate = (description, images) => {
+  const imagesTemplate = createImagesTemplate(images);
+
   return (
     `<section class="event__section  event__section--destination">
     <h3 class="event__section-title  event__section-title--destination">Destination</h3>
@@ -43,7 +44,7 @@ const createDestinationTemplate = (description, images) => {
 
     <div class="event__photos-container">
       <div class="event__photos-tape">
-        ${createImagesTemplate(images)}
+        ${imagesTemplate}
       </div>
     </div>
   </section>`
@@ -71,6 +72,11 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
   const type = eventType.toLowerCase();
   const startTime = `${getDateTime(startDate, true)} ${formatTime(startDate)}`;
   const endTime = `${getDateTime(endDate, true)} ${formatTime(endDate)}`;
+  const destinationsTemplate = createDestinationsTemplate(destinations);
+  const resetButtonText = isNewEvent ? `Cancel` : `Delete`;
+  const editFormControls = isNewEvent ? `` : createEditControls();
+  const offersTemplate = offers.length === 0 ? `` : createOffersTemplate(offers);
+  const destinationDescriptionTemplate = isNewEvent ? createDestinationDescTemplate(description, images) : ``;
 
   return (
     `<form class="trip-events__item  event  event--edit" action="#" method="post">
@@ -149,7 +155,7 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
         </label>
         <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination}" list="destination-list-1">
         <datalist id="destination-list-1">
-          ${createDestinationsTemplate(destinations)}
+          ${destinationsTemplate}
         </datalist>
       </div>
 
@@ -174,16 +180,40 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
       </div>
 
       <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-      <button class="event__reset-btn" type="reset">${isNewEvent ? `Cancel` : `Delete`}</button>
+      <button class="event__reset-btn" type="reset">${resetButtonText}</button>
 
-      ${isNewEvent ? `` : createEditControls()}
+      ${editFormControls}
     </header>
     <section class="event__details">
 
-      ${offers.length === 0 ? `` : createOffersTemplate(offers)}
+      ${offersTemplate}
 
-      ${isNewEvent ? createDestinationTemplate(description, images) : ``}
+      ${destinationDescriptionTemplate}
     </section>
   </form>`
   );
 };
+
+export default class EventForm {
+  constructor(eventItem, isNewEvent = true) {
+    this._eventItem = eventItem;
+    this._isNewEvent = isNewEvent;
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createEventFormTemplate(this._eventItem, this._isNewEvent);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}
