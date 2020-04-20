@@ -1,4 +1,5 @@
-import {formatTime, castTimeFormat, getDateTime, createElement} from '../util.js';
+import {formatTime, castTimeFormat, getDateTime} from '../utils/common.js';
+import AbstractComponent from './abstract-component.js';
 
 const getDuration = (startDate, endDate) => {
   const diff = endDate.getTime() - startDate.getTime();
@@ -68,25 +69,20 @@ export const createEventItemTemplate = (eventItem) => {
   );
 };
 
-export default class EventItem {
+export default class EventItem extends AbstractComponent {
   constructor(eventItem) {
+    super();
     this._eventItem = eventItem;
-    this._element = null;
   }
 
   getTemplate() {
     return createEventItemTemplate(this._eventItem);
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
+  setClickHandler(handler) {
+    this
+      .getElement()
+      .querySelector(`.event__rollup-btn`)
+      .addEventListener(`click`, handler);
   }
 }
