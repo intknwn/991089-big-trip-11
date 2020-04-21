@@ -1,5 +1,6 @@
-import {formatTime, getDateTime, createElement} from '../util.js';
+import {formatTime, getDateTime} from '../utils/common.js';
 import {destinations} from '../mocks/event-item.js';
+import AbstractComponent from './abstract-component.js';
 
 const createDestinationsTemplate = (destItems) => {
   return destItems.map((dest) => `<option value="${dest}"></option>`).join(`\n`);
@@ -76,7 +77,7 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
   const resetButtonText = isNewEvent ? `Cancel` : `Delete`;
   const editFormControls = isNewEvent ? `` : createEditControls();
   const offersTemplate = offers.length === 0 ? `` : createOffersTemplate(offers);
-  const destinationDescriptionTemplate = isNewEvent ? createDestinationDescTemplate(description, images) : ``;
+  const destinationDescriptionTemplate = createDestinationDescTemplate(description, images);
 
   return (
     `<form class="trip-events__item  event  event--edit" action="#" method="post">
@@ -194,8 +195,9 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
   );
 };
 
-export default class EventForm {
+export default class EventForm extends AbstractComponent {
   constructor(eventItem, isNewEvent = true) {
+    super();
     this._eventItem = eventItem;
     this._isNewEvent = isNewEvent;
     this._element = null;
@@ -205,15 +207,9 @@ export default class EventForm {
     return createEventFormTemplate(this._eventItem, this._isNewEvent);
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
+  setSubmitHandler(handler) {
+    this
+      .getElement()
+      .addEventListener(`submit`, handler);
   }
 }
