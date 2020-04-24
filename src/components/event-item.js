@@ -1,4 +1,4 @@
-import {formatTime, castTimeFormat, getDateTime} from '../utils/common.js';
+import {formatTime, castTimeFormat, getDateTime, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
 import AbstractComponent from './abstract-component.js';
 
 const getDuration = (startDate, endDate) => {
@@ -18,7 +18,7 @@ const createOffersTemplate = (offers) =>
   offers.map((offer) => {
     return (
       `<li class="event__offer">
-      <span class="event__offer-title">${offer.name}</span>
+      <span class="event__offer-title">${offer.desc}</span>
       +
       €&nbsp;<span class="event__offer-price">${offer.price}</span>
      </li>`
@@ -26,22 +26,25 @@ const createOffersTemplate = (offers) =>
   }).join(`\n`);
 
 export const createEventItemTemplate = (eventItem) => {
-  const {eventType, destination, offers, startDate, endDate, price} = eventItem;
+  const {eventName, eventType, destination, offers, startDate, endDate, price} = eventItem;
+  const eventNameUpperCase = makeFirstLetterUppercase(eventName);
+  const iconName = eventName;
   const duration = getDuration(startDate, endDate);
   const startDateTime = getDateTime(startDate);
   const endDateTime = getDateTime(endDate);
   const startTime = formatTime(startDate);
   const endTime = formatTime(endDate);
   const offersTemplate = createOffersTemplate(offers);
+  const preposition = createPreposition(eventType);
 
 
   return (
     `<li class="trip-events__item">
     <div class="event">
       <div class="event__type">
-        <img class="event__type-icon" width="42" height="42" src="img/icons/${eventType.toLowerCase()}.png" alt="Event type icon">
+        <img class="event__type-icon" width="42" height="42" src="img/icons/${iconName}.png" alt="Event type icon">
       </div>
-      <h3 class="event__title">${eventType} to ${destination}</h3>
+      <h3 class="event__title">${eventNameUpperCase} ${preposition} ${destination}</h3>
 
       <div class="event__schedule">
         <p class="event__time">
