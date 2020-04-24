@@ -1,30 +1,35 @@
-import {formatTime, getDateTime} from '../utils/common.js';
-import {destinations} from '../mocks/event-item.js';
-import AbstractComponent from './abstract-component.js';
+import {formatTime, getDateTime, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
+import {destinations, createDescriptionText, lorem, events, Offers} from '../mocks/event-item.js';
+import AbstractSmartComponent from './abstract-smart-component.js';
 
 const createDestinationsTemplate = (destItems) => {
   return destItems.map((dest) => `<option value="${dest}"></option>`).join(`\n`);
 };
 
+const createOfferSelectorsTemplate = (offers) => {
+  return offers.map((offer) => {
+    return (
+      `<div class="event__offer-selector">
+          <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.name}" type="checkbox" name="event-offer-${offer.name}" checked="">
+          <label class="event__offer-label" for="event-offer-${offer. name}">
+            <span class="event__offer-title">${offer.desc}</span>
+            +
+            €&nbsp;<span class="event__offer-price">${offer.price}</span>
+          </label>
+        </div>`
+    );
+  }).join(`\n`);
+};
+
 const createOffersTemplate = (offers) => {
+  const offerSelectorsTemplate = createOfferSelectorsTemplate(offers);
   return (
     `<section class="event__section  event__section--offers">
       <h3 class="event__section-title  event__section-title--offers">Offers</h3>
 
       <div class="event__available-offers">
 
-      ${offers.map((offer, index) => {
-      return (
-        `<div class="event__offer-selector">
-            <input class="event__offer-checkbox  visually-hidden" id="event-offer-${index}" type="checkbox" name="event-offer-luggage" checked="">
-            <label class="event__offer-label" for="event-offer-${index}">
-              <span class="event__offer-title">${offer.name}</span>
-              +
-              €&nbsp;<span class="event__offer-price">${offer.price}</span>
-            </label>
-          </div>`
-      );
-    }).join(`\n`)}
+      ${offerSelectorsTemplate}
 
       </div>
       </section>`
@@ -52,32 +57,62 @@ const createDestinationDescTemplate = (description, images) => {
   );
 };
 
-const createEditControls = () => {
+const createAddToFavoritesButtonTemplate = (favorite) => {
+  const isChecked = favorite ? `checked` : ``;
+
+
   return (
-    `<input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" checked>
+    `<input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${isChecked}>
     <label class="event__favorite-btn" for="event-favorite-1">
       <span class="visually-hidden">Add to favorite</span>
       <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
         <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z"/>
       </svg>
-    </label>
+    </label>`
+  );
+};
 
-    <button class="event__rollup-btn" type="button">
+const createRollUpButtonTemplate = () => {
+  return (
+    `<button class="event__rollup-btn" type="button">
       <span class="visually-hidden">Open event</span>
     </button>`
   );
 };
 
-export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
-  const {eventType, destination, offers, description, images, startDate, endDate, price} = eventItem;
-  const type = eventType.toLowerCase();
+const createEventTypeItems = (eventNames, checkedEventName) => {
+  return eventNames.map((eventName) => {
+    const checked = eventName === checkedEventName ? `checked` : ``;
+    const eventNameUpperCase = makeFirstLetterUppercase(eventName);
+
+    return (
+      `<div class="event__type-item">
+      <input id="event-type-${eventName}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${eventName}" ${checked}>
+      <label class="event__type-label  event__type-label--${eventName}" for="event-type-${eventName}-1">${eventNameUpperCase}</label>
+    </div>`
+    );
+  }).join(`\n`);
+};
+
+export const createEventFormTemplate = (eventItem, isNewEvent = true, changes) => {
+  const {eventName, eventType, destination, offers, description, images, startDate, endDate, price, isFavorite} = eventItem;
+  const {newEventName} = changes;
+  const newOffers = Offers[newEventName];
+  const eventNameUpperCase = newEventName ? makeFirstLetterUppercase(newEventName) : makeFirstLetterUppercase(eventName);
+  const iconName = newEventName || eventName;
   const startTime = `${getDateTime(startDate, true)} ${formatTime(startDate)}`;
   const endTime = `${getDateTime(endDate, true)} ${formatTime(endDate)}`;
   const destinationsTemplate = createDestinationsTemplate(destinations);
   const resetButtonText = isNewEvent ? `Cancel` : `Delete`;
-  const editFormControls = isNewEvent ? `` : createEditControls();
-  const offersTemplate = offers.length === 0 ? `` : createOffersTemplate(offers);
-  const destinationDescriptionTemplate = createDestinationDescTemplate(description, images);
+  const addToFavoritesButton = isNewEvent ? `` : createAddToFavoritesButtonTemplate(isFavorite);
+  const rollUpButton = isNewEvent ? `` : createRollUpButtonTemplate();
+  const offersTemplate = offers.length === 0 ? `` : createOffersTemplate(newOffers || offers);
+  const descriptionText = newEventName ? createDescriptionText(lorem) : description;
+  const destinationDescriptionTemplate = createDestinationDescTemplate(descriptionText, images);
+  const eventTypeString = newEventName ? events[newEventName] : eventType;
+  const preposition = createPreposition(eventTypeString);
+  const transportTypeNames = Object.keys(events).filter((key) => events[key] === `move`);
+  const activityTypeNames = Object.keys(events).filter((key) => events[key] === `stop`);
 
   return (
     `<form class="trip-events__item  event  event--edit" action="#" method="post">
@@ -85,74 +120,28 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
       <div class="event__type-wrapper">
         <label class="event__type  event__type-btn" for="event-type-toggle-1">
           <span class="visually-hidden">Choose event type</span>
-          <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
+          <img class="event__type-icon" width="17" height="17" src="img/icons/${iconName}.png" alt="Event type icon">
         </label>
         <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
 
         <div class="event__type-list">
           <fieldset class="event__type-group">
             <legend class="visually-hidden">Transfer</legend>
+            ${createEventTypeItems(transportTypeNames, newEventName || eventName)}
 
-            <div class="event__type-item">
-              <input id="event-type-taxi-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="taxi">
-              <label class="event__type-label  event__type-label--taxi" for="event-type-taxi-1">Taxi</label>
-            </div>
-
-            <div class="event__type-item">
-              <input id="event-type-bus-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="bus">
-              <label class="event__type-label  event__type-label--bus" for="event-type-bus-1">Bus</label>
-            </div>
-
-            <div class="event__type-item">
-              <input id="event-type-train-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="train">
-              <label class="event__type-label  event__type-label--train" for="event-type-train-1">Train</label>
-            </div>
-
-            <div class="event__type-item">
-              <input id="event-type-ship-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="ship">
-              <label class="event__type-label  event__type-label--ship" for="event-type-ship-1">Ship</label>
-            </div>
-
-            <div class="event__type-item">
-              <input id="event-type-transport-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="transport">
-              <label class="event__type-label  event__type-label--transport" for="event-type-transport-1">Transport</label>
-            </div>
-
-            <div class="event__type-item">
-              <input id="event-type-drive-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="drive">
-              <label class="event__type-label  event__type-label--drive" for="event-type-drive-1">Drive</label>
-            </div>
-
-            <div class="event__type-item">
-              <input id="event-type-flight-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="flight" checked="">
-              <label class="event__type-label  event__type-label--flight" for="event-type-flight-1">Flight</label>
-            </div>
           </fieldset>
 
           <fieldset class="event__type-group">
             <legend class="visually-hidden">Activity</legend>
+            ${createEventTypeItems(activityTypeNames, newEventName || eventName)}
 
-            <div class="event__type-item">
-              <input id="event-type-check-in-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="check-in">
-              <label class="event__type-label  event__type-label--check-in" for="event-type-check-in-1">Check-in</label>
-            </div>
-
-            <div class="event__type-item">
-              <input id="event-type-sightseeing-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="sightseeing">
-              <label class="event__type-label  event__type-label--sightseeing" for="event-type-sightseeing-1">Sightseeing</label>
-            </div>
-
-            <div class="event__type-item">
-              <input id="event-type-restaurant-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="restaurant">
-              <label class="event__type-label  event__type-label--restaurant" for="event-type-restaurant-1">Restaurant</label>
-            </div>
           </fieldset>
         </div>
       </div>
 
       <div class="event__field-group  event__field-group--destination">
         <label class="event__label  event__type-output" for="event-destination-1">
-          Flight to
+          ${eventNameUpperCase} ${preposition}
         </label>
         <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination}" list="destination-list-1">
         <datalist id="destination-list-1">
@@ -183,7 +172,8 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
       <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
       <button class="event__reset-btn" type="reset">${resetButtonText}</button>
 
-      ${editFormControls}
+      ${addToFavoritesButton}
+      ${rollUpButton}
     </header>
     <section class="event__details">
 
@@ -195,21 +185,58 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true) => {
   );
 };
 
-export default class EventForm extends AbstractComponent {
+export default class EventForm extends AbstractSmartComponent {
   constructor(eventItem, isNewEvent = true) {
     super();
     this._eventItem = eventItem;
     this._isNewEvent = isNewEvent;
+    this._newEventName = null;
     this._element = null;
+    this._submitHandler = null;
+    this._addToFavoritesHandler = null;
+
+    this._subscribeOnEvents();
+  }
+
+  recoveryListeners() {
+    this.setSubmitHandler(this._submitHandler);
+    this.setAddToFavoritesHandler(this._addToFavoritesHandler);
+    this._subscribeOnEvents();
+  }
+
+  rerender() {
+    super.rerender();
+
+    this.recoveryListeners();
   }
 
   getTemplate() {
-    return createEventFormTemplate(this._eventItem, this._isNewEvent);
+    return createEventFormTemplate(this._eventItem, this._isNewEvent, {newEventName: this._newEventName});
   }
 
   setSubmitHandler(handler) {
     this
       .getElement()
       .addEventListener(`submit`, handler);
+
+    this._submitHandler = handler;
+  }
+
+  setAddToFavoritesHandler(handler) {
+    this
+      .getElement()
+      .querySelector(`.event__favorite-btn`)
+      .addEventListener(`click`, handler);
+
+    this._addToFavoritesHandler = handler;
+  }
+
+  _subscribeOnEvents() {
+    const eventTypeList = this.getElement().querySelector(`.event__type-list`);
+
+    eventTypeList.addEventListener(`change`, (evt) => {
+      this._newEventName = evt.target.value;
+      this.rerender();
+    });
   }
 }

@@ -32,3 +32,13 @@ export const createSortedByDateObject = (events) => {
     return Object.assign(acc, {[date]: dateEvents});
   }, {});
 };
+
+export const createPreposition = (eventType) => {
+  if (eventType === `stop`) {
+    return `in`;
+  }
+
+  return `to`;
+};
+
+export const makeFirstLetterUppercase = ([first, ...rest]) => [first.toUpperCase(), ...rest].join(``);
