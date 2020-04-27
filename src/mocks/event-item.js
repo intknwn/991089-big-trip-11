@@ -1,16 +1,3 @@
-/* const events = [
-  {name: `taxi`, type: `move`},
-  {name: `train`, type: `move`},
-  {name: `ship`, type: `move`},
-  {name: `transport`, type: `move`},
-  {name: `drive`, type: `move`},
-  {name: `flight`, type: `move`},
-  {name: `check-in`, type: `stop`},
-  {name: `sightseeing`, type: `stop`},
-  {name: `restaurant`, type: `stop`},
-];
- */
-
 export const events = {
   'taxi': `move`,
   'bus': `move`,
@@ -66,7 +53,7 @@ export const createDescriptionText = (str) => str
   .join(``);
 
 const getRandomDate = (targetDate) => {
-  const newDate = new Date();
+  const newDate = new Date(`August 20, 2020 20:20:20`);
   const day = targetDate ? targetDate.getDate() : newDate.getDate();
 
   newDate.setDate(day + getRandomIntegerNumber(1, 8));

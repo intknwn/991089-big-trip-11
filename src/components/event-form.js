@@ -1,6 +1,9 @@
 import {formatTime, getDateTime, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
 import {destinations, createDescriptionText, lorem, events, Offers} from '../mocks/event-item.js';
 import AbstractSmartComponent from './abstract-smart-component.js';
+import flatpickr from "flatpickr";
+
+import "flatpickr/dist/flatpickr.min.css";
 
 const createDestinationsTemplate = (destItems) => {
   return destItems.map((dest) => `<option value="${dest}"></option>`).join(`\n`);
@@ -194,8 +197,10 @@ export default class EventForm extends AbstractSmartComponent {
     this._element = null;
     this._submitHandler = null;
     this._addToFavoritesHandler = null;
+    this._flatpickr = null;
 
     this._subscribeOnEvents();
+    this._applyFlatpickr();
   }
 
   recoveryListeners() {
@@ -208,6 +213,7 @@ export default class EventForm extends AbstractSmartComponent {
     super.rerender();
 
     this.recoveryListeners();
+    this._applyFlatpickr();
   }
 
   getTemplate() {
@@ -238,5 +244,29 @@ export default class EventForm extends AbstractSmartComponent {
       this._newEventName = evt.target.value;
       this.rerender();
     });
+  }
+
+  _applyFlatpickr() {
+    if (this._flatpickr) {
+      this._flatpickr.startDate.destroy();
+      this._flatpickr.endDate.destroy();
+      this._flatpickr = null;
+    }
+
+    const config = {
+      altInput: true,
+      allowInput: true,
+      altFormat: `d/m/Y H:i`,
+      enableTime: true,
+      // eslint-disable-next-line camelcase
+      time_24hr: true
+    };
+
+    const startTimeElement = this.getElement().querySelector(`#event-start-time-1`);
+    const endTimeElement = this.getElement().querySelector(`#event-end-time-1`);
+
+    this._flatpickr = {};
+    this._flatpickr.startDate = flatpickr(startTimeElement, Object.assign(config, {defaultDate: this._eventItem.startDate}));
+    this._flatpickr.endDate = flatpickr(endTimeElement, Object.assign(config, {defaultDate: this._eventItem.endDate}));
   }
 }
