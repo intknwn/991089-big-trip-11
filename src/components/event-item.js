@@ -1,18 +1,5 @@
-import {formatTime, castTimeFormat, getDateTime, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
+import {formatTime, getDateTime, getDuration, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
 import AbstractComponent from './abstract-component.js';
-
-const getDuration = (startDate, endDate) => {
-  const diff = endDate.getTime() - startDate.getTime();
-  const diffInDays = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const diffInHours = Math.floor((diff / (1000 * 60 * 60)));
-  const diffInMinutes = diff / (1000 * 60);
-
-  const days = diffInDays < 1 ? `` : `${castTimeFormat(diffInDays)}D `;
-  const hours = diffInHours < 1 ? `` : `${castTimeFormat(diffInHours % 24)}H `;
-  const minutes = diffInMinutes < 1 ? `` : `${castTimeFormat(diffInMinutes % 60)}M`;
-
-  return `${days}${hours}${minutes}`;
-};
 
 const createOffersTemplate = (offers) =>
   offers.map((offer) => {

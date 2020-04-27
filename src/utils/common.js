@@ -1,20 +1,24 @@
-export const castTimeFormat = (value) => {
-  return value < 10 ? `0${value}` : String(value);
-};
+import moment from 'moment';
+import momentDurationFormatSetup from 'moment-duration-format';
+momentDurationFormatSetup(moment);
 
 export const formatTime = (date) => {
-  const hours = castTimeFormat(date.getHours() % 12);
-  const minutes = castTimeFormat(date.getMinutes());
-
-  return `${hours}:${minutes}`;
+  return moment(date).format(`hh:mm`);
 };
 
 export const getDateTime = (date, isReversed = false) => {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  const dateString = moment(date).format(`DD/MM/YYYY`);
+  const dateStringReversed = moment(date).format(`YYYY/MM/DD`);
 
-  return isReversed ? `${castTimeFormat(day)}/${castTimeFormat(month)}/${year}` : `${year}-${castTimeFormat(month)}-${castTimeFormat(day)}`;
+  return isReversed ? dateString : dateStringReversed;
+};
+
+export const getDuration = (startDate, endDate) => {
+  const date1 = moment(startDate);
+  const date2 = moment(endDate);
+  const duration = moment.duration(date2.diff(date1));
+
+  return duration.format(`d[D] h[H] m[M]`, {trim: `all`});
 };
 
 export const createElement = (template) => {
