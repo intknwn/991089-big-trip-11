@@ -1,4 +1,4 @@
-import {formatTime, getDateTime, getDuration, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
+import {formatTime, getDateTime, getFormattedDuration, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
 import AbstractComponent from './abstract-component.js';
 
 const createOffersTemplate = (offers) =>
@@ -16,7 +16,7 @@ export const createEventItemTemplate = (eventItem) => {
   const {eventName, eventType, destination, offers, startDate, endDate, price} = eventItem;
   const eventNameUpperCase = makeFirstLetterUppercase(eventName);
   const iconName = eventName;
-  const duration = getDuration(startDate, endDate);
+  const duration = getFormattedDuration(startDate, endDate);
   const startDateTime = getDateTime(startDate);
   const endDateTime = getDateTime(endDate);
   const startTime = formatTime(startDate);

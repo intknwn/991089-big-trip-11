@@ -1,5 +1,6 @@
 import {formatTime, getDateTime, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
-import {destinations, createDescriptionText, lorem, events, Offers} from '../mocks/event-item.js';
+import {destinations, descriptions, events, Offers} from '../mocks/event-item.js';
+import {Mode as EventControllerMode} from '../controllers/event.js';
 import AbstractSmartComponent from './abstract-smart-component.js';
 import flatpickr from "flatpickr";
 
@@ -11,10 +12,12 @@ const createDestinationsTemplate = (destItems) => {
 
 const createOfferSelectorsTemplate = (offers) => {
   return offers.map((offer) => {
+    const checked = offer.checked ? `checked` : ``;
+
     return (
       `<div class="event__offer-selector">
-          <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.name}" type="checkbox" name="event-offer-${offer.name}" checked="">
-          <label class="event__offer-label" for="event-offer-${offer. name}">
+          <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.name}" type="checkbox" name="event-offer-${offer.name}" ${checked}>
+          <label class="event__offer-label" for="event-offer-${offer.name}">
             <span class="event__offer-title">${offer.desc}</span>
             +
             €&nbsp;<span class="event__offer-price">${offer.price}</span>
@@ -39,30 +42,33 @@ const createOffersTemplate = (offers) => {
   );
 };
 
-const createImagesTemplate = (images) =>
-  images.map((url) => `<img class="event__photo" src="${url}" alt="Event photo">`).join(`\n`);
-
+const createImagesTemplate = (images) => {
+  return images.map((url) => `<img class="event__photo" src="${url}" alt="Event photo">`).join(`\n`);
+};
 
 const createDestinationDescTemplate = (description, images) => {
-  const imagesTemplate = createImagesTemplate(images);
+  if (description) {
+    const imagesTemplate = createImagesTemplate(images);
 
-  return (
-    `<section class="event__section  event__section--destination">
-    <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-    <p class="event__destination-description">${description}</p>
+    return (
+      `<section class="event__section  event__section--destination">
+      <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+      <p class="event__destination-description">${description}</p>
 
-    <div class="event__photos-container">
-      <div class="event__photos-tape">
-        ${imagesTemplate}
+      <div class="event__photos-container">
+        <div class="event__photos-tape">
+          ${imagesTemplate}
+        </div>
       </div>
-    </div>
-  </section>`
-  );
+    </section>`
+    );
+  } else {
+    return ``;
+  }
 };
 
 const createAddToFavoritesButtonTemplate = (favorite) => {
   const isChecked = favorite ? `checked` : ``;
-
 
   return (
     `<input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${isChecked}>
@@ -97,25 +103,92 @@ const createEventTypeItems = (eventNames, checkedEventName) => {
   }).join(`\n`);
 };
 
-export const createEventFormTemplate = (eventItem, isNewEvent = true, changes) => {
-  const {eventName, eventType, destination, offers, description, images, startDate, endDate, price, isFavorite} = eventItem;
-  const {newEventName} = changes;
-  const newOffers = Offers[newEventName];
-  const eventNameUpperCase = newEventName ? makeFirstLetterUppercase(newEventName) : makeFirstLetterUppercase(eventName);
-  const iconName = newEventName || eventName;
+const parseOffersData = (data) => {
+  const offerKeys = Array.from(data.keys()).filter((key) => key.includes(`event-offer-`));
+
+  return offerKeys.map((key) => {
+    const offerName = key.substr(`event-offer-`.length).trim();
+
+    return offerName;
+  });
+};
+
+const createUpdatedOffers = (offers, offerNames) => {
+  const offersCopy = offers.reduce((acc, offer) => [...acc, Object.assign({}, offer)], []);
+  offerNames.forEach((offerName) => {
+    const offer = offersCopy.find((item) => item.name === offerName);
+    offer.checked = true;
+  });
+
+  return offersCopy;
+};
+
+const createEventDetails = (offers, destination) => {
+  if (offers || destination) {
+    return (
+      `<section class="event__details">
+        ${offers}
+
+        ${destination}
+      </section>
+    `);
+  } else {
+    return ``;
+  }
+
+};
+
+const parseFormData = (data) => {
+  const offersToUpdate = parseOffersData(data);
+  const id = String(new Date() + Math.random());
+  const eventName = data.get(`event-type`);
+  const eventType = events[eventName];
+  const offers = createUpdatedOffers(Offers[eventName], offersToUpdate);
+  const destination = data.get(`event-destination`);
+  const description = destination ? descriptions[destination].description : ``;
+  const images = destination ? descriptions[destination].images : [];
+  const startDate = data.get(`event-start-time`);
+  const endDate = data.get(`event-end-time`);
+  const price = data.get(`event-price`);
+
+  return {
+    id,
+    eventName,
+    eventType,
+    offers,
+    destination,
+    description,
+    images,
+    startDate,
+    endDate,
+    price
+  };
+};
+
+export const createEventFormTemplate = (eventItem, mode, {newEventName, newDestination}) => {
+  const isCreateMode = mode === EventControllerMode.CREATE ? true : false;
+  const {eventName: name, destination: dest, offers, images, startDate, endDate, price, isFavorite} = eventItem;
+  const eventName = newEventName ? newEventName : name;
+  const destination = newDestination ? newDestination : dest;
+  const mockImages = destination ? descriptions[destination].images : [];
+  const destinationImages = isCreateMode ? mockImages : images;
+
+  const description = destination ? descriptions[destination].description : ``;
+  const destinationDescriptionTemplate = createDestinationDescTemplate(description, destinationImages);
+  const offersTemplate = offers.length === 0 ? `` : createOffersTemplate(Offers[eventName] || offers);
+  const eventNameUpperCase = makeFirstLetterUppercase(eventName);
+  const iconName = eventName;
   const startTime = `${getDateTime(startDate, true)} ${formatTime(startDate)}`;
   const endTime = `${getDateTime(endDate, true)} ${formatTime(endDate)}`;
   const destinationsTemplate = createDestinationsTemplate(destinations);
-  const resetButtonText = isNewEvent ? `Cancel` : `Delete`;
-  const addToFavoritesButton = isNewEvent ? `` : createAddToFavoritesButtonTemplate(isFavorite);
-  const rollUpButton = isNewEvent ? `` : createRollUpButtonTemplate();
-  const offersTemplate = offers.length === 0 ? `` : createOffersTemplate(newOffers || offers);
-  const descriptionText = newEventName ? createDescriptionText(lorem) : description;
-  const destinationDescriptionTemplate = createDestinationDescTemplate(descriptionText, images);
-  const eventTypeString = newEventName ? events[newEventName] : eventType;
+  const resetButtonText = isCreateMode ? `Cancel` : `Delete`;
+  const addToFavoritesButton = isCreateMode ? `` : createAddToFavoritesButtonTemplate(isFavorite);
+  const rollUpButton = isCreateMode ? `` : createRollUpButtonTemplate();
+  const eventTypeString = events[eventName];
   const preposition = createPreposition(eventTypeString);
   const transportTypeNames = Object.keys(events).filter((key) => events[key] === `move`);
   const activityTypeNames = Object.keys(events).filter((key) => events[key] === `stop`);
+  const eventDetailsTemplate = createEventDetails(offersTemplate, destinationDescriptionTemplate);
 
   return (
     `<form class="trip-events__item  event  event--edit" action="#" method="post">
@@ -169,7 +242,7 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true, changes) =
           <span class="visually-hidden">Price</span>
           €
         </label>
-        <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${price}">
+        <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" value="${price}">
       </div>
 
       <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
@@ -178,25 +251,24 @@ export const createEventFormTemplate = (eventItem, isNewEvent = true, changes) =
       ${addToFavoritesButton}
       ${rollUpButton}
     </header>
-    <section class="event__details">
-
-      ${offersTemplate}
-
-      ${destinationDescriptionTemplate}
-    </section>
+      ${eventDetailsTemplate}
   </form>`
   );
 };
 
 export default class EventForm extends AbstractSmartComponent {
-  constructor(eventItem, isNewEvent = true) {
+  constructor(eventItem, mode) {
     super();
     this._eventItem = eventItem;
-    this._isNewEvent = isNewEvent;
+    this._mode = mode;
     this._newEventName = null;
+    this._newEventDestination = null;
     this._element = null;
     this._submitHandler = null;
     this._addToFavoritesHandler = null;
+    this._resetButtonHandler = null;
+    this._rollUpButtonHandler = null;
+    this._destinationInputHandler = null;
     this._flatpickr = null;
 
     this._subscribeOnEvents();
@@ -206,6 +278,7 @@ export default class EventForm extends AbstractSmartComponent {
   recoveryListeners() {
     this.setSubmitHandler(this._submitHandler);
     this.setAddToFavoritesHandler(this._addToFavoritesHandler);
+    this.setRollUpButtonHandler(this._rollUpButtonHandler);
     this._subscribeOnEvents();
   }
 
@@ -217,7 +290,14 @@ export default class EventForm extends AbstractSmartComponent {
   }
 
   getTemplate() {
-    return createEventFormTemplate(this._eventItem, this._isNewEvent, {newEventName: this._newEventName});
+    return createEventFormTemplate(this._eventItem, this._mode, {newEventName: this._newEventName, newDestination: this._newEventDestination});
+  }
+
+  getData() {
+    const form = this.getElement();
+    const formData = new FormData(form);
+
+    return parseFormData(formData);
   }
 
   setSubmitHandler(handler) {
@@ -229,6 +309,10 @@ export default class EventForm extends AbstractSmartComponent {
   }
 
   setAddToFavoritesHandler(handler) {
+    if (this._mode === EventControllerMode.CREATE) {
+      return;
+    }
+
     this
       .getElement()
       .querySelector(`.event__favorite-btn`)
@@ -237,13 +321,48 @@ export default class EventForm extends AbstractSmartComponent {
     this._addToFavoritesHandler = handler;
   }
 
-  _subscribeOnEvents() {
-    const eventTypeList = this.getElement().querySelector(`.event__type-list`);
+  setResetButtonHandler(handler) {
+    this
+      .getElement()
+      .querySelector(`.event__reset-btn`)
+      .addEventListener(`click`, handler);
 
-    eventTypeList.addEventListener(`change`, (evt) => {
-      this._newEventName = evt.target.value;
-      this.rerender();
-    });
+    this._resetButtonHandler = handler;
+  }
+
+  setRollUpButtonHandler(handler) {
+    if (this._mode === EventControllerMode.CREATE) {
+      return;
+    }
+
+    this
+      .getElement()
+      .querySelector(`.event__rollup-btn`)
+      .addEventListener(`click`, handler);
+
+    this._rollUpButtonHandler = handler;
+  }
+
+  _subscribeOnEvents() {
+    this
+      .getElement()
+      .querySelector(`.event__type-list`)
+      .addEventListener(`change`, (evt) => {
+        this._newEventName = evt.target.value;
+        this.rerender();
+      });
+
+    this
+      .getElement()
+      .querySelector(`.event__input--destination`)
+      .addEventListener(`change`, (evt) => {
+        const userInput = evt.target.value;
+
+        if (destinations.includes(userInput)) {
+          this._newEventDestination = userInput;
+          this.rerender();
+        }
+      });
   }
 
   _applyFlatpickr() {

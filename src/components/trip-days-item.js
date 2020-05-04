@@ -1,14 +1,22 @@
 import {months} from '../const.js';
 import AbstractComponent from './abstract-component.js';
 
-const createTripDaysItemTemplate = (counter, date) => {
+const createDayInfoTemplate = (counter, date) => {
   const monthDayString = `${new Date(date).getDate()} ${months[new Date(date).getMonth()]}`;
+
+  return (`
+    <span class="day__counter">${counter}</span>
+    <time class="day__date" datetime="${date}">${monthDayString}</time>
+  `);
+};
+
+const createTripDaysItemTemplate = (counter, date) => {
+  const dayInfoTemplate = counter && date ? createDayInfoTemplate(counter, date) : ``;
 
   return (
     `<li class="trip-days__item  day">
       <div class="day__info">
-        <span class="day__counter">${counter}</span>
-        <time class="day__date" datetime="${date}">${monthDayString}</time>
+        ${dayInfoTemplate}
       </div>
       <ul class="trip-events__list"></ul>
     </li>`
