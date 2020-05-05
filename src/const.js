@@ -12,3 +12,15 @@ export const months = {
   10: `NOV`,
   11: `DEC`,
 };
+
+export const FilterName = {
+  EVERYTHING: `everything`,
+  FUTURE: `future`,
+  PAST: `past`,
+};
+
+export const SortName = {
+  EVENT: `event`,
+  TIME: `time`,
+  PRICE: `price`,
+};

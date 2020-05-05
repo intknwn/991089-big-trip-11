@@ -1,17 +1,15 @@
 import TripInfoComponent from './components/trip-info.js';
 import TripCostComponent from './components/trip-info-cost.js';
 import MenuComponent from './components/menu.js';
-import FiltersComponent from './components/filters.js';
-import SortingComponent from './components/sorting.js';
 import TripDaysListComponent from './components/trip-days.js';
 import TripController from './controllers/trip';
+import FiltersController from './controllers/filter.js';
+import EventsModel from './models/events.js';
 import {createEventItems} from './mocks/event-item.js';
-import {createSortedByDateObject} from './utils/common.js';
 import {render, RenderPosition} from './utils/render.js';
 
-const EVENTS_COUNT = 20;
-const unsortedEvents = createEventItems(EVENTS_COUNT);
-const sortedEvents = createSortedByDateObject(unsortedEvents);
+const EVENTS_COUNT = 5;
+const events = createEventItems(EVENTS_COUNT);
 
 const tripMainElement = document.querySelector(`.trip-main`);
 render(tripMainElement, new TripInfoComponent(), RenderPosition.AFTERBEGIN);
@@ -21,12 +19,16 @@ render(tripInfoElement, new TripCostComponent(), RenderPosition.BEFOREEND);
 
 const tripControlsElement = tripMainElement.querySelector(`.trip-controls`);
 render(tripControlsElement, new MenuComponent(), RenderPosition.AFTERBEGIN);
-render(tripControlsElement, new FiltersComponent(), RenderPosition.BEFOREEND);
+
+const eventsModel = new EventsModel();
+eventsModel.setEvents(events);
 
 const tripEventsElement = document.querySelector(`.trip-events`);
-render(tripEventsElement, new SortingComponent(), RenderPosition.BEFOREEND);
 
 const tripDaysListComponent = new TripDaysListComponent();
-render(tripEventsElement, tripDaysListComponent, RenderPosition.BEFOREEND);
-const tripController = new TripController(tripDaysListComponent);
-tripController.render(sortedEvents);
+render(tripEventsElement, tripDaysListComponent, RenderPosition.AFTERBEGIN);
+
+const tripController = new TripController(tripDaysListComponent, eventsModel);
+tripController.render();
+
+

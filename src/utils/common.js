@@ -18,7 +18,11 @@ export const getDuration = (startDate, endDate) => {
   const date2 = moment(endDate);
   const duration = moment.duration(date2.diff(date1));
 
-  return duration.format(`d[D] h[H] m[M]`, {trim: `all`});
+  return duration;
+};
+
+export const getFormattedDuration = (startDate, endDate) => {
+  return getDuration(startDate, endDate).format(`d[D] h[H] m[M]`, {trim: `all`});
 };
 
 export const createElement = (template) => {
@@ -46,3 +50,17 @@ export const createPreposition = (eventType) => {
 };
 
 export const makeFirstLetterUppercase = ([first, ...rest]) => [first.toUpperCase(), ...rest].join(``);
+
+export const addDayProperty = (eventsArray) => {
+  const obj = createSortedByDateObject(eventsArray);
+
+  return Object.keys(obj)
+    .sort()
+    .reduce((acc, date, i) => {
+      obj[date].forEach((event) => {
+        event.day = i + 1;
+      });
+
+      return [...acc, ...obj[date]];
+    }, []);
+};
