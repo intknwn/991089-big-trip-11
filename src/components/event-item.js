@@ -2,12 +2,12 @@ import {formatTime, getDateTime, getFormattedDuration, createPreposition, makeFi
 import AbstractComponent from './abstract-component.js';
 
 const createOffersTemplate = (offers) =>
-  offers.map((offer) => {
+  offers.map(({title, price}) => {
     return (
       `<li class="event__offer">
-      <span class="event__offer-title">${offer.desc}</span>
+      <span class="event__offer-title">${title}</span>
       +
-      €&nbsp;<span class="event__offer-price">${offer.price}</span>
+      €&nbsp;<span class="event__offer-price">${price}</span>
      </li>`
     );
   }).join(`\n`);

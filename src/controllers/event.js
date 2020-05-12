@@ -1,16 +1,18 @@
 import EventItemComponent from '../components/event-item.js';
 import EventFormComponent from '../components/event-form.js';
+import EventModel from '../models/event.js';
 import {render, replace, remove, RenderPosition} from '../utils/render.js';
-import {destinations} from '../mocks/event-item.js';
+import {findDestination, findOffers} from '../utils/common.js';
 
 export const Mode = {
   DEFAULT: `default`,
   EDIT: `edit`,
   CREATE: `create`,
+  UPDATE: `update`
 };
 
 export const EmptyEvent = {
-  id: String(new Date() + Math.random()),
+  id: null,
   eventName: `ship`,
   eventType: ``,
   offers: [],
@@ -20,11 +22,44 @@ export const EmptyEvent = {
   startDate: new Date(),
   endDate: new Date(),
   price: ``,
+  isFavorite: false
+};
+
+const parseFormData = (data, eventsModel) => {
+  const destinations = eventsModel.getDestinations();
+  const modelOffers = eventsModel.getOffers();
+
+  const eventName = data.get(`event-type`);
+  const {offers} = findOffers(modelOffers, eventName);
+  const destination = data.get(`event-destination`);
+  const {description: descriptionText} = findDestination(destinations, destination);
+  const description = destination ? descriptionText : ``;
+  const {images: newImages} = findDestination(destinations, destination);
+  const images = destination ? newImages : [];
+  const startDate = data.get(`event-start-time`);
+  const endDate = data.get(`event-end-time`);
+  const price = parseInt(data.get(`event-price`), 10);
+
+  return new EventModel({
+    'base_price': price,
+    'date_from': startDate,
+    'date_to': endDate,
+    'destination': {
+      description,
+      name: destination,
+      pictures: images
+    },
+    'id': null,
+    'is_favorite': false,
+    'offers': offers,
+    'type': eventName
+  });
 };
 
 export default class EventController {
-  constructor(container, onDataChange, onViewChange) {
+  constructor(container, eventsModel, onDataChange, onViewChange) {
     this._container = container;
+    this._eventsModel = eventsModel;
     this._eventItemComponent = null;
     this._eventFormComponent = null;
     this._onEscKeyDown = this._onEscKeyDown.bind(this);
@@ -39,7 +74,7 @@ export default class EventController {
     const oldEventFormComponent = this._eventFormComponent;
 
     this._eventItemComponent = new EventItemComponent(event);
-    this._eventFormComponent = new EventFormComponent(event, this._mode);
+    this._eventFormComponent = new EventFormComponent(event, this._eventsModel, this._mode);
 
     this._eventItemComponent.setClickHandler(() => {
       this._replaceEventToForm();
@@ -48,16 +83,23 @@ export default class EventController {
 
     this._eventFormComponent.setSubmitHandler((evt) => {
       evt.preventDefault();
-      const data = this._eventFormComponent.getData();
-      const destInput = evt.target.querySelector(`.event__input--destination`);
+      const formData = this._eventFormComponent.getData();
+      const data = parseFormData(formData, this._eventsModel);
+      data.isFavorite = event.isFavorite;
+      data.id = event.id;
 
-      if (destinations.includes(destInput.value)) {
-        destInput.setCustomValidity(``);
+      const destinationInput = evt.target.querySelector(`.event__input--destination`);
+      const destinations = this._eventsModel.getDestinations();
+      const destination = findDestination(destinations, destinationInput.value);
+
+      if (destination) {
+        destinationInput.setCustomValidity(``);
       } else {
-        destInput.setCustomValidity(`Please, select one of the destinations from the list`);
+        destinationInput.setCustomValidity(`Please, select one of the destinations from the list`);
       }
 
       if (evt.target.checkValidity()) {
+        this._mode = Mode.DEFAULT;
         this._onDataChange(this, event, data);
       }
 
@@ -65,7 +107,11 @@ export default class EventController {
     });
 
     this._eventFormComponent.setAddToFavoritesHandler(() => {
-      this._onDataChange(this, event, Object.assign({}, event, {isFavorite: !event.isFavorite}));
+      this._mode = Mode.UPDATE;
+
+      const newEvent = EventModel.clone(event);
+      newEvent.isFavorite = !event.isFavorite;
+      this._onDataChange(this, event, newEvent);
     });
 
     this._eventFormComponent.setResetButtonHandler(() => {
@@ -94,6 +140,9 @@ export default class EventController {
         }
         render(this._container, this._eventFormComponent, RenderPosition.AFTERBEGIN);
         break;
+      case Mode.UPDATE:
+        replace(this._eventFormComponent, oldEventFormComponent);
+        break;
     }
   }
 
@@ -119,6 +168,10 @@ export default class EventController {
     if (this._mode !== Mode.DEFAULT) {
       this._replaceFormToEvent();
     }
+  }
+
+  getMode() {
+    return this._mode;
   }
 
   destroy() {

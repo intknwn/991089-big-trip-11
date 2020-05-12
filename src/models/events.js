@@ -6,6 +6,8 @@ import {addDayProperty} from '../utils/common.js';
 export default class EventsModel {
   constructor() {
     this._events = [];
+    this._destinations = [];
+    this._offers = [];
     this._activeFilter = FilterName.EVERYTHING;
     this._activeSort = SortName.EVENT;
 
@@ -31,6 +33,22 @@ export default class EventsModel {
     this._callHandlers(this._dataChangeHandlers);
   }
 
+  setDestinations(destinations) {
+    this._destinations = destinations;
+  }
+
+  getDestinations() {
+    return this._destinations;
+  }
+
+  setOffers(offers) {
+    this._offers = offers;
+  }
+
+  getOffers() {
+    return this._offers;
+  }
+
   setFilter(filterName) {
     this._activeFilter = filterName;
     this._callHandlers(this._filterChangeHandlers);
@@ -41,14 +59,14 @@ export default class EventsModel {
     this._callHandlers(this._sortChangeHandlers);
   }
 
-  updateEvent(id, updatedEvent) {
+  updateEvent(id, newEvent) {
     const index = this._events.findIndex((event) => event.id === id);
 
     if (index === -1) {
       return false;
     }
 
-    this._events = [...this._events.slice(0, index), updatedEvent, ...this._events.slice(index + 1)];
+    this._events = [...this._events.slice(0, index), newEvent, ...this._events.slice(index + 1)];
 
     return true;
   }
