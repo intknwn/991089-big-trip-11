@@ -52,7 +52,6 @@ export default class Filters extends AbstractSmartComponent {
     this._filterChangeHandler = handler;
   }
 
-
   _setChecked() {
     this._filters.forEach((filter) => {
       filter.isChecked = filter.name === this._currentFilter;

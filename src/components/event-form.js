@@ -1,34 +1,55 @@
 import {formatTime, getDateTime, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
-import {destinations, descriptions, events, Offers} from '../mocks/event-item.js';
+import {findDestination, findOffers} from '../utils/common.js';
 import {Mode as EventControllerMode} from '../controllers/event.js';
 import AbstractSmartComponent from './abstract-smart-component.js';
 import flatpickr from "flatpickr";
 
 import "flatpickr/dist/flatpickr.min.css";
 
-const createDestinationsTemplate = (destItems) => {
-  return destItems.map((dest) => `<option value="${dest}"></option>`).join(`\n`);
+const events = {
+  'taxi': `move`,
+  'bus': `move`,
+  'train': `move`,
+  'ship': `move`,
+  'transport': `move`,
+  'drive': `move`,
+  'flight': `move`,
+  'check-in': `stop`,
+  'sightseeing': `stop`,
+  'restaurant': `stop`,
 };
 
-const createOfferSelectorsTemplate = (offers) => {
-  return offers.map((offer) => {
+const createDestinationsTemplate = (destItems) => {
+  return destItems.map(({name}) => `<option value="${name}"></option>`).join(`\n`);
+};
+
+const createOfferSelectorsTemplate = ({type, offers}) => {
+
+
+  return offers.map((offer, counter) => {
+    const {title, price} = offer;
     const checked = offer.checked ? `checked` : ``;
 
     return (
       `<div class="event__offer-selector">
-          <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.name}" type="checkbox" name="event-offer-${offer.name}" ${checked}>
-          <label class="event__offer-label" for="event-offer-${offer.name}">
-            <span class="event__offer-title">${offer.desc}</span>
+          <input class="event__offer-checkbox  visually-hidden" id="event-offer-${type}-${counter}" type="checkbox" name="event-offer-${type}" ${checked}>
+          <label class="event__offer-label" for="event-offer-${type}-${counter}">
+            <span class="event__offer-title">${title}</span>
             +
-            €&nbsp;<span class="event__offer-price">${offer.price}</span>
+            €&nbsp;<span class="event__offer-price">${price}</span>
           </label>
         </div>`
     );
   }).join(`\n`);
 };
 
-const createOffersTemplate = (offers) => {
-  const offerSelectorsTemplate = createOfferSelectorsTemplate(offers);
+const createOffersTemplate = (offersObject) => {
+  const {offers} = offersObject;
+  if (offers.length === 0) {
+    return ``;
+  }
+
+  const offerSelectorsTemplate = createOfferSelectorsTemplate(offersObject);
   return (
     `<section class="event__section  event__section--offers">
       <h3 class="event__section-title  event__section-title--offers">Offers</h3>
@@ -43,7 +64,7 @@ const createOffersTemplate = (offers) => {
 };
 
 const createImagesTemplate = (images) => {
-  return images.map((url) => `<img class="event__photo" src="${url}" alt="Event photo">`).join(`\n`);
+  return images.map(({src, description}) => `<img class="event__photo" src="${src}" alt="${description}">`).join(`\n`);
 };
 
 const createDestinationDescTemplate = (description, images) => {
@@ -103,26 +124,6 @@ const createEventTypeItems = (eventNames, checkedEventName) => {
   }).join(`\n`);
 };
 
-const parseOffersData = (data) => {
-  const offerKeys = Array.from(data.keys()).filter((key) => key.includes(`event-offer-`));
-
-  return offerKeys.map((key) => {
-    const offerName = key.substr(`event-offer-`.length).trim();
-
-    return offerName;
-  });
-};
-
-const createUpdatedOffers = (offers, offerNames) => {
-  const offersCopy = offers.reduce((acc, offer) => [...acc, Object.assign({}, offer)], []);
-  offerNames.forEach((offerName) => {
-    const offer = offersCopy.find((item) => item.name === offerName);
-    offer.checked = true;
-  });
-
-  return offersCopy;
-};
-
 const createEventDetails = (offers, destination) => {
   if (offers || destination) {
     return (
@@ -132,50 +133,28 @@ const createEventDetails = (offers, destination) => {
         ${destination}
       </section>
     `);
-  } else {
-    return ``;
   }
 
+  return ``;
 };
 
-const parseFormData = (data) => {
-  const offersToUpdate = parseOffersData(data);
-  const id = String(new Date() + Math.random());
-  const eventName = data.get(`event-type`);
-  const eventType = events[eventName];
-  const offers = createUpdatedOffers(Offers[eventName], offersToUpdate);
-  const destination = data.get(`event-destination`);
-  const description = destination ? descriptions[destination].description : ``;
-  const images = destination ? descriptions[destination].images : [];
-  const startDate = data.get(`event-start-time`);
-  const endDate = data.get(`event-end-time`);
-  const price = data.get(`event-price`);
+export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventName, newDestination}) => {
+  const destinations = eventsModel.getDestinations();
+  const modelOffers = eventsModel.getOffers();
 
-  return {
-    id,
-    eventName,
-    eventType,
-    offers,
-    destination,
-    description,
-    images,
-    startDate,
-    endDate,
-    price
-  };
-};
-
-export const createEventFormTemplate = (eventItem, mode, {newEventName, newDestination}) => {
   const isCreateMode = mode === EventControllerMode.CREATE ? true : false;
-  const {eventName: name, destination: dest, offers, images, startDate, endDate, price, isFavorite} = eventItem;
+  const {eventName: name, destination: dest, images, startDate, endDate, price, isFavorite} = eventItem;
   const eventName = newEventName ? newEventName : name;
-  const destination = newDestination ? newDestination : dest;
-  const mockImages = destination ? descriptions[destination].images : [];
-  const destinationImages = isCreateMode ? mockImages : images;
+  const destinationName = newDestination ? newDestination : dest;
+  const pictures = destinationName ? findDestination(destinations, destinationName).images : [];
+  const newImages = destinationName ? pictures : [];
+  const destinationImages = isCreateMode ? newImages : images;
 
-  const description = destination ? descriptions[destination].description : ``;
+  const descriptionText = destinationName ? findDestination(destinations, destinationName).description : ``;
+  const description = destinationName ? descriptionText : ``;
   const destinationDescriptionTemplate = createDestinationDescTemplate(description, destinationImages);
-  const offersTemplate = offers.length === 0 ? `` : createOffersTemplate(Offers[eventName] || offers);
+  const offerObject = findOffers(modelOffers, eventName);
+  const offersTemplate = createOffersTemplate(offerObject);
   const eventNameUpperCase = makeFirstLetterUppercase(eventName);
   const iconName = eventName;
   const startTime = `${getDateTime(startDate, true)} ${formatTime(startDate)}`;
@@ -219,7 +198,7 @@ export const createEventFormTemplate = (eventItem, mode, {newEventName, newDesti
         <label class="event__label  event__type-output" for="event-destination-1">
           ${eventNameUpperCase} ${preposition}
         </label>
-        <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination}" list="destination-list-1">
+        <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationName}" list="destination-list-1">
         <datalist id="destination-list-1">
           ${destinationsTemplate}
         </datalist>
@@ -257,9 +236,10 @@ export const createEventFormTemplate = (eventItem, mode, {newEventName, newDesti
 };
 
 export default class EventForm extends AbstractSmartComponent {
-  constructor(eventItem, mode) {
+  constructor(eventItem, eventsModel, mode) {
     super();
     this._eventItem = eventItem;
+    this._eventsModel = eventsModel;
     this._mode = mode;
     this._newEventName = null;
     this._newEventDestination = null;
@@ -290,14 +270,13 @@ export default class EventForm extends AbstractSmartComponent {
   }
 
   getTemplate() {
-    return createEventFormTemplate(this._eventItem, this._mode, {newEventName: this._newEventName, newDestination: this._newEventDestination});
+    return createEventFormTemplate(this._eventItem, this._eventsModel, this._mode, {newEventName: this._newEventName, newDestination: this._newEventDestination});
   }
 
   getData() {
     const form = this.getElement();
-    const formData = new FormData(form);
 
-    return parseFormData(formData);
+    return new FormData(form);
   }
 
   setSubmitHandler(handler) {
@@ -358,7 +337,10 @@ export default class EventForm extends AbstractSmartComponent {
       .addEventListener(`change`, (evt) => {
         const userInput = evt.target.value;
 
-        if (destinations.includes(userInput)) {
+        const destinations = this._eventsModel.getDestinations();
+        const destination = findDestination(destinations, userInput);
+
+        if (destination) {
           this._newEventDestination = userInput;
           this.rerender();
         }

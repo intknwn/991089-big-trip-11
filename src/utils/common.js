@@ -64,3 +64,11 @@ export const addDayProperty = (eventsArray) => {
       return [...acc, ...obj[date]];
     }, []);
 };
+
+export const findDestination = (destinations, name) => {
+  return destinations.find((destination) => destination.name === name);
+};
+
+export const findOffers = (offers, type) => {
+  return offers.find((offer) => offer.type === type);
+};

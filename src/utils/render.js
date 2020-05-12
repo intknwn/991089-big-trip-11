@@ -15,7 +15,6 @@ export const render = (container, component, place) => {
 };
 
 export const replace = (newComponent, oldComponent) => {
-  /* debugger; */
   const parentElement = oldComponent.getElement().parentElement;
   const newElement = newComponent.getElement();
 
