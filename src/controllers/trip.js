@@ -38,28 +38,49 @@ export default class TripController {
   }
 
   _onDataChange(eventController, oldData, newData) {
-    if (newData === null) {
+    if (newData === EmptyEvent) {
       this._newEvent = null;
       this._addEventButton.disabled = false;
-      this._eventsModel.removeEvent(oldData.id);
       eventController.destroy();
-      this._updateEvents();
+    } else if (newData === null) {
+      this._api.deleteEvent(oldData.id)
+        .then(() => {
+          eventController.onSuccess();
+          this._eventsModel.removeEvent(oldData.id);
+          eventController.destroy();
+          this._updateEvents();
+        })
+        .catch(() => {
+          eventController.onError();
+        });
     } else if (newData) {
       if (this._newEvent) {
-        this._newEvent = null;
-        this._addEventButton.disabled = false;
-        eventController.destroy();
-        this._eventsModel.addEvent(newData);
-        this._updateEvents();
+        this._api.createEvent(newData)
+          .then((event) => {
+            eventController.onSuccess();
+            this._newEvent = null;
+            this._addEventButton.disabled = false;
+            eventController.destroy();
+            this._eventsModel.addEvent(event);
+            this._updateEvents();
+          })
+          .catch(() => {
+            eventController.setMode(EventControllerMode.CREATE);
+            eventController.onError();
+          });
       } else {
         this._api.updateEvent(oldData.id, newData)
           .then((event) => {
+            eventController.onSuccess();
             const controllerMode = eventController.getMode();
             const isSuccess = this._eventsModel.updateEvent(oldData.id, newData);
 
             if (isSuccess) {
               eventController.render(event, controllerMode);
             }
+          })
+          .catch(() => {
+            eventController.onError();
           });
       }
     }

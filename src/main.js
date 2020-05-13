@@ -9,8 +9,9 @@ import {render, remove, RenderPosition} from './utils/render.js';
 import API from './api';
 
 const AUTHORIZATION = `Basic DJHskh2afJ9HSFSUAoy4`;
+const URL = `https://11.ecmascript.pages.academy/big-trip`;
 
-const api = new API(AUTHORIZATION);
+const api = new API(AUTHORIZATION, URL);
 
 const tripMainElement = document.querySelector(`.trip-main`);
 render(tripMainElement, new TripInfoComponent(), RenderPosition.AFTERBEGIN);
