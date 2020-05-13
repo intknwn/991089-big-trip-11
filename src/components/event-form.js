@@ -19,6 +19,11 @@ const events = {
   'restaurant': `stop`,
 };
 
+const DefaultData = {
+  deleteButtonText: `Delete`,
+  saveButtonText: `Save`,
+};
+
 const createDestinationsTemplate = (destItems) => {
   return destItems.map(({name}) => `<option value="${name}"></option>`).join(`\n`);
 };
@@ -138,7 +143,7 @@ const createEventDetails = (offers, destination) => {
   return ``;
 };
 
-export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventName, newDestination}) => {
+export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventName, newDestination, externalData}) => {
   const destinations = eventsModel.getDestinations();
   const modelOffers = eventsModel.getOffers();
 
@@ -160,7 +165,10 @@ export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventN
   const startTime = `${getDateTime(startDate, true)} ${formatTime(startDate)}`;
   const endTime = `${getDateTime(endDate, true)} ${formatTime(endDate)}`;
   const destinationsTemplate = createDestinationsTemplate(destinations);
-  const resetButtonText = isCreateMode ? `Cancel` : `Delete`;
+  const deleteButtonText = externalData.deleteButtonText;
+  const saveButtonText = externalData.saveButtonText;
+  const cancelButtonText = `Cancel`;
+  const resetButtonText = isCreateMode ? cancelButtonText : deleteButtonText;
   const addToFavoritesButton = isCreateMode ? `` : createAddToFavoritesButtonTemplate(isFavorite);
   const rollUpButton = isCreateMode ? `` : createRollUpButtonTemplate();
   const eventTypeString = events[eventName];
@@ -224,7 +232,7 @@ export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventN
         <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" value="${price}">
       </div>
 
-      <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+      <button class="event__save-btn  btn  btn--blue" type="submit">${saveButtonText}</button>
       <button class="event__reset-btn" type="reset">${resetButtonText}</button>
 
       ${addToFavoritesButton}
@@ -249,6 +257,7 @@ export default class EventForm extends AbstractSmartComponent {
     this._resetButtonHandler = null;
     this._rollUpButtonHandler = null;
     this._destinationInputHandler = null;
+    this._externalData = DefaultData;
     this._flatpickr = null;
 
     this._subscribeOnEvents();
@@ -259,24 +268,37 @@ export default class EventForm extends AbstractSmartComponent {
     this.setSubmitHandler(this._submitHandler);
     this.setAddToFavoritesHandler(this._addToFavoritesHandler);
     this.setRollUpButtonHandler(this._rollUpButtonHandler);
+    this.setResetButtonHandler(this._resetButtonHandler);
     this._subscribeOnEvents();
   }
 
   rerender() {
     super.rerender();
-
-    this.recoveryListeners();
     this._applyFlatpickr();
   }
 
   getTemplate() {
-    return createEventFormTemplate(this._eventItem, this._eventsModel, this._mode, {newEventName: this._newEventName, newDestination: this._newEventDestination});
+    return createEventFormTemplate(
+        this._eventItem,
+        this._eventsModel,
+        this._mode,
+        {
+          newEventName: this._newEventName,
+          newDestination: this._newEventDestination,
+          externalData: this._externalData,
+        }
+    );
   }
 
   getData() {
     const form = this.getElement();
 
     return new FormData(form);
+  }
+
+  setData(data) {
+    this._externalData = Object.assign({}, DefaultData, data);
+    this.rerender();
   }
 
   setSubmitHandler(handler) {

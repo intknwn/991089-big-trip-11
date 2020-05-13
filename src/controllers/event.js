@@ -4,6 +4,8 @@ import EventModel from '../models/event.js';
 import {render, replace, remove, RenderPosition} from '../utils/render.js';
 import {findDestination, findOffers} from '../utils/common.js';
 
+const SHAKE_ANIMATION_TIMEOUT = 600;
+
 export const Mode = {
   DEFAULT: `default`,
   EDIT: `edit`,
@@ -98,6 +100,13 @@ export default class EventController {
         destinationInput.setCustomValidity(`Please, select one of the destinations from the list`);
       }
 
+      this._eventFormComponent.setData({
+        saveButtonText: `Saving...`,
+      });
+
+      this._unsetBorder();
+      this._disable();
+
       if (evt.target.checkValidity()) {
         this._mode = Mode.DEFAULT;
         this._onDataChange(this, event, data);
@@ -115,6 +124,18 @@ export default class EventController {
     });
 
     this._eventFormComponent.setResetButtonHandler(() => {
+      this._eventFormComponent.setData({
+        deleteButtonText: `Deleting...`,
+      });
+
+      this._unsetBorder();
+      this._disable();
+
+      if (this._mode === Mode.CREATE) {
+        this._onDataChange(this, event, EmptyEvent);
+        return;
+      }
+
       this._onDataChange(this, event, null);
     });
 
@@ -174,10 +195,71 @@ export default class EventController {
     return this._mode;
   }
 
+  setMode(mode) {
+    this._mode = mode;
+  }
+
   destroy() {
     remove(this._eventItemComponent);
     remove(this._eventFormComponent);
     document.removeEventListener(`keydown`, this._onEscKeyDown);
+  }
+
+  _switch() {
+    this._eventFormComponent
+      .getElement()
+      .querySelectorAll(`input`, `button`)
+      .forEach((control) => {
+        control.disabled = !control.disabled;
+      });
+  }
+
+  _disable() {
+    this._eventFormComponent.getElement().style.opacity = `0.8`;
+    this._switch();
+  }
+
+  _enable() {
+    this._eventFormComponent.getElement().style.opacity = ``;
+    this._switch();
+  }
+
+  _setDefaultButtons() {
+    this._eventFormComponent.setData({
+      saveButtonText: `Save`,
+      deleteButtonText: `Delete`,
+    });
+  }
+
+  _setBorder() {
+    this._eventFormComponent.getElement().style.border = `1px solid red`;
+  }
+
+  _unsetBorder() {
+    this._eventFormComponent.getElement().style.border = ``;
+  }
+
+  onError() {
+    this._enable();
+    this._shake();
+  }
+
+  onSuccess() {
+    this._enable();
+    this._setDefaultButtons();
+  }
+
+  _shake() {
+    this._eventFormComponent.getElement().style.animation = `shake ${SHAKE_ANIMATION_TIMEOUT / 1000}s`;
+    this._eventItemComponent.getElement().style.animation = `shake ${SHAKE_ANIMATION_TIMEOUT / 1000}s`;
+
+    setTimeout(() => {
+      this._eventFormComponent.getElement().style.animation = ``;
+      this._eventItemComponent.getElement().style.animation = ``;
+
+      this._setDefaultButtons();
+      this._setBorder();
+    }, SHAKE_ANIMATION_TIMEOUT);
   }
 }
 

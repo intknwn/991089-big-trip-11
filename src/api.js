@@ -3,9 +3,16 @@ import Destination from './models/destination.js';
 import Offer from './models/offer.js';
 
 const URL = {
-  EVENTS: `https://11.ecmascript.pages.academy/big-trip/points`,
-  DESTINATIONS: `https://11.ecmascript.pages.academy/big-trip/destinations`,
-  OFFERS: `https://11.ecmascript.pages.academy/big-trip/offers`,
+  EVENTS: `points`,
+  DESTINATIONS: `destinations`,
+  OFFERS: `offers`,
+};
+
+const Method = {
+  GET: `GET`,
+  POST: `POST`,
+  PUT: `PUT`,
+  DELETE: `DELETE`
 };
 
 const checkStatus = (response) => {
@@ -17,45 +24,63 @@ const checkStatus = (response) => {
 };
 
 export default class API {
-  constructor(authorization) {
+  constructor(authorization, baseURL) {
     this._authorization = authorization;
+    this._baseURL = baseURL;
   }
 
-  _get(url, parser) {
-    const headers = new Headers();
+  _load({url, method = Method.GET, body = null, headers = new Headers()}) {
     headers.append(`Authorization`, this._authorization);
-    return fetch(url, {headers})
+
+    return fetch(`${this._baseURL}/${url}`, {method, body, headers})
       .then(checkStatus)
-      .then((response) => response.json())
-      .then(parser);
+      .catch((err) => {
+        throw err;
+      });
   }
 
   updateEvent(id, data) {
-    const body = JSON.stringify(data.toRAW());
-
-    const headers = new Headers();
-    headers.append(`Authorization`, this._authorization);
-    headers.append(`Content-Type`, `application/json`);
-
-    return fetch(`https://11.ecmascript.pages.academy/big-trip/points/${id}`, {
-      method: `PUT`,
-      body,
-      headers,
+    return this._load({
+      url: `${URL.EVENTS}/${id}`,
+      method: Method.PUT,
+      body: JSON.stringify(data.toRAW()),
+      headers: new Headers({"Content-Type": `application/json`})
     })
-      .then(checkStatus)
       .then((response) => response.json())
       .then(Event.parseEvent);
   }
 
+  createEvent(data) {
+    return this._load({
+      url: URL.EVENTS,
+      method: Method.POST,
+      body: JSON.stringify(data.toRAW()),
+      headers: new Headers({"Content-Type": `application/json`})
+    })
+      .then((response) => response.json())
+      .then(Event.parseEvent);
+  }
+
+  deleteEvent(id) {
+    return this._load({url: `${URL.EVENTS}/${id}`, method: Method.DELETE});
+  }
+
   getEvents() {
-    return this._get(URL.EVENTS, Event.parseEvents);
+    return this._load({url: URL.EVENTS})
+      .then((response) => response.json())
+      .then(Event.parseEvents);
   }
 
   getDestinations() {
-    return this._get(URL.DESTINATIONS, Destination.parseDestinations);
+    return this._load({url: URL.DESTINATIONS})
+      .then((response) => response.json())
+      .then(Destination.parseDestinations);
   }
 
   getOffers() {
-    return this._get(URL.OFFERS, Offer.parseOffers);
+    return this._load({url: URL.OFFERS})
+      .then((response) => response.json())
+      .then(Offer.parseOffers);
   }
 }
+
