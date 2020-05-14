@@ -1,8 +1,9 @@
 import TripInfoComponent from './components/trip-info.js';
 import TripCostComponent from './components/trip-info-cost.js';
-import MenuComponent from './components/menu.js';
+import MenuComponent, {MenuItem} from './components/menu.js';
 import TripDaysListComponent from './components/trip-days.js';
 import LoadingComponent from './components/loading.js';
+import StatsComponent from './components/stats.js';
 import TripController from './controllers/trip';
 import EventsModel from './models/events.js';
 import {render, remove, RenderPosition} from './utils/render.js';
@@ -20,7 +21,8 @@ const tripInfoElement = tripMainElement.querySelector(`.trip-info`);
 render(tripInfoElement, new TripCostComponent(), RenderPosition.BEFOREEND);
 
 const tripControlsElement = tripMainElement.querySelector(`.trip-controls`);
-render(tripControlsElement, new MenuComponent(), RenderPosition.AFTERBEGIN);
+const menuComponent = new MenuComponent();
+render(tripControlsElement, menuComponent, RenderPosition.AFTERBEGIN);
 
 const eventsModel = new EventsModel();
 
@@ -35,6 +37,29 @@ render(tripEventsElement, tripDaysListComponent, RenderPosition.AFTERBEGIN);
 
 const tripController = new TripController(tripDaysListComponent, eventsModel, api);
 
+const statsComponent = new StatsComponent(eventsModel);
+render(tripEventsElement, statsComponent, RenderPosition.AFTERBEGIN);
+statsComponent.hide();
+
+menuComponent.setOnChange((menuItem) => {
+  const elements = document.querySelectorAll(`.page-body__container`);
+
+  switch (menuItem) {
+    case MenuItem.TABLE:
+      menuComponent.setActiveItem(MenuItem.TABLE);
+      statsComponent.hide();
+      tripController.show();
+      elements.forEach((element) => element.classList.remove(`page-body__container--stats`));
+      break;
+    case MenuItem.STATS:
+      menuComponent.setActiveItem(MenuItem.STATS);
+      tripController.hide();
+      statsComponent.show();
+      elements.forEach((element) => element.classList.add(`page-body__container--stats`));
+      break;
+  }
+});
+
 api.getDestinations()
   .then((destinations) => {
     eventsModel.setDestinations(destinations);
@@ -48,4 +73,5 @@ api.getDestinations()
     remove(loadingMessageElement);
     eventsModel.setEvents(events);
     tripController.render();
+    statsComponent.renderCharts();
   });

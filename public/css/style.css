@@ -60,6 +60,9 @@ main {
     left: 130px;
     width: 2px;
     background-color: rgba(255, 255, 255, 0.58); }
+  .page-body__container--stats:after {
+    display: none;
+  }
 
 .page-body__page-main {
   -ms-flex-positive: 1;
@@ -772,6 +775,10 @@ main {
   .event__input--price {
     width: 66px; }
 
+.event__input:disabled {
+  background-color: #ffffff;
+}
+
 .event__save-btn {
   margin-right: 18px; }
 
@@ -930,3 +937,27 @@ main {
 
 .statistics__item:not(:last-child) {
   margin-bottom: 78px; }
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 0.6s;
+}

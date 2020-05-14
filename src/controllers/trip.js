@@ -213,4 +213,14 @@ export default class TripController {
       this.createEvent();
     });
   }
+
+  hide() {
+    this._container.hide();
+    this._sortController.hide();
+  }
+
+  show() {
+    this._container.show();
+    this._sortController.show();
+  }
 }

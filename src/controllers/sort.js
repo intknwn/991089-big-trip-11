@@ -54,4 +54,12 @@ export default class SortController {
     this._sortComponent = null;
     this._activeSort = SortName.EVENT;
   }
+
+  hide() {
+    this._sortComponent.hide();
+  }
+
+  show() {
+    this._sortComponent.show();
+  }
 }
