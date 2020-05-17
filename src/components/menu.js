@@ -15,6 +15,11 @@ export const createMenuTemplate = () => {
 };
 
 export default class Menu extends AbstractComponent {
+  constructor() {
+    super();
+
+    this._onChangeHandler = null;
+  }
 
   getTemplate() {
     return createMenuTemplate();
@@ -43,6 +48,11 @@ export default class Menu extends AbstractComponent {
         handler(item);
       }));
 
+    this._onChangeHandler = handler;
+  }
+
+  switchToTableView() {
+    this._onChangeHandler(MenuItem.TABLE);
   }
 
 }

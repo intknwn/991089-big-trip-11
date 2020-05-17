@@ -1,4 +1,5 @@
 import {render, replace, RenderPosition} from '../utils/render.js';
+import {getDisabledFilters} from '../utils/filter.js';
 import {FilterName} from '../const.js';
 import FilterComponent from '../components/filters.js';
 
@@ -18,13 +19,21 @@ export default class FiltersController {
 
   render() {
     const container = this._container;
+    const events = this._eventsModel.getEventsAll();
+    const disabledFilters = getDisabledFilters(events);
 
     const filters = Object.keys(FilterName).map((filterName) => {
+      const isDisabled = disabledFilters[FilterName[filterName]];
+
+      if (isDisabled) {
+        return null;
+      }
+
       return {
         name: FilterName[filterName],
         isChecked: FilterName[filterName] === this._activeFilter,
       };
-    });
+    }).filter((filter) => filter);
 
     const oldComponent = this._filterComponent;
     this._filterComponent = new FilterComponent(filters);

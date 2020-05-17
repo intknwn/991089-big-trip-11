@@ -22,3 +22,11 @@ export const getFilteredEvents = (events, filter) => {
   return events;
 };
 
+export const getDisabledFilters = (events) => {
+  return {
+    [FilterName.EVERYTHING]: events.length === 0,
+    [FilterName.FUTURE]: getFutureEvents(events).length === 0,
+    [FilterName.PAST]: getPastEvents(events).length === 0
+  };
+};
+

@@ -2,7 +2,7 @@ import EventItemComponent from '../components/event-item.js';
 import EventFormComponent from '../components/event-form.js';
 import EventModel from '../models/event.js';
 import {render, replace, remove, RenderPosition} from '../utils/render.js';
-import {findDestination, findOffers} from '../utils/common.js';
+import {findDestination, findOffers, getDuration} from '../utils/common.js';
 
 const SHAKE_ANIMATION_TIMEOUT = 600;
 
@@ -27,17 +27,33 @@ export const EmptyEvent = {
   isFavorite: false
 };
 
-const parseFormData = (data, eventsModel) => {
+const parseOffers = (formComponent, offers) => {
+  const offerTitles = [];
+
+  formComponent
+    .getElement()
+    .querySelectorAll(`.event__offer-checkbox`)
+    .forEach((element) => {
+      if (element.checked) {
+        offerTitles.push(element.dataset.title);
+      }
+    });
+
+  return offerTitles.map((title) => {
+    return offers.find((offer) => offer.title === title);
+  });
+};
+
+const parseFormData = (data, eventsModel, formComponent) => {
   const destinations = eventsModel.getDestinations();
   const modelOffers = eventsModel.getOffers();
 
   const eventName = data.get(`event-type`);
   const {offers} = findOffers(modelOffers, eventName);
+  const eventOffers = parseOffers(formComponent, offers);
   const destination = data.get(`event-destination`);
-  const {description: descriptionText} = findDestination(destinations, destination);
-  const description = destination ? descriptionText : ``;
-  const {images: newImages} = findDestination(destinations, destination);
-  const images = destination ? newImages : [];
+  const {description} = findDestination(destinations, destination);
+  const {images} = findDestination(destinations, destination);
   const startDate = data.get(`event-start-time`);
   const endDate = data.get(`event-end-time`);
   const price = parseInt(data.get(`event-price`), 10);
@@ -53,7 +69,7 @@ const parseFormData = (data, eventsModel) => {
     },
     'id': null,
     'is_favorite': false,
-    'offers': offers,
+    'offers': eventOffers,
     'type': eventName
   });
 };
@@ -85,19 +101,33 @@ export default class EventController {
 
     this._eventFormComponent.setSubmitHandler((evt) => {
       evt.preventDefault();
+
+      const form = evt.target;
+
+      const destinationInput = form.querySelector(`.event__input--destination`);
+
+      if (!destinationInput.value) {
+        destinationInput.setCustomValidity(`Please, select one of the destinations from the list`);
+        form.reportValidity();
+        return;
+      } else {
+        destinationInput.setCustomValidity(``);
+      }
+
       const formData = this._eventFormComponent.getData();
-      const data = parseFormData(formData, this._eventsModel);
+      const data = parseFormData(formData, this._eventsModel, this._eventFormComponent);
       data.isFavorite = event.isFavorite;
       data.id = event.id;
 
-      const destinationInput = evt.target.querySelector(`.event__input--destination`);
-      const destinations = this._eventsModel.getDestinations();
-      const destination = findDestination(destinations, destinationInput.value);
+      const endDateInput = form.querySelector(`#event-end-time-1`);
+      const duration = getDuration(data.startDate, data.endDate).asMilliseconds();
 
-      if (destination) {
-        destinationInput.setCustomValidity(``);
+      if (duration < 0) {
+        endDateInput.setCustomValidity(`The end date cannot be earlier than the start date of the event`);
+        form.reportValidity();
+        return;
       } else {
-        destinationInput.setCustomValidity(`Please, select one of the destinations from the list`);
+        endDateInput.setCustomValidity(``);
       }
 
       this._eventFormComponent.setData({
@@ -107,12 +137,11 @@ export default class EventController {
       this._unsetBorder();
       this._disable();
 
-      if (evt.target.checkValidity()) {
-        this._mode = Mode.DEFAULT;
-        this._onDataChange(this, event, data);
-      }
+      this._mode = Mode.DEFAULT;
+      this._onDataChange(this, event, data);
 
       document.removeEventListener(`keydown`, this._onEscKeyDown);
+
     });
 
     this._eventFormComponent.setAddToFavoritesHandler(() => {

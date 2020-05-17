@@ -3,6 +3,7 @@ import {findDestination, findOffers} from '../utils/common.js';
 import {Mode as EventControllerMode} from '../controllers/event.js';
 import AbstractSmartComponent from './abstract-smart-component.js';
 import flatpickr from "flatpickr";
+import LabelPlugin from 'flatpickr/dist/plugins/labelPlugin/labelPlugin';
 
 import "flatpickr/dist/flatpickr.min.css";
 
@@ -28,16 +29,14 @@ const createDestinationsTemplate = (destItems) => {
   return destItems.map(({name}) => `<option value="${name}"></option>`).join(`\n`);
 };
 
-const createOfferSelectorsTemplate = ({type, offers}) => {
-
-
+const createOfferSelectorsTemplate = ({type, offers}, offersNames) => {
   return offers.map((offer, counter) => {
     const {title, price} = offer;
-    const checked = offer.checked ? `checked` : ``;
+    const checked = offersNames.includes(title) ? `checked` : ``;
 
     return (
       `<div class="event__offer-selector">
-          <input class="event__offer-checkbox  visually-hidden" id="event-offer-${type}-${counter}" type="checkbox" name="event-offer-${type}" ${checked}>
+          <input class="event__offer-checkbox  visually-hidden" id="event-offer-${type}-${counter}" type="checkbox" name="event-offer-${type}" data-title="${title}" data-price="${price}" ${checked}>
           <label class="event__offer-label" for="event-offer-${type}-${counter}">
             <span class="event__offer-title">${title}</span>
             +
@@ -48,13 +47,14 @@ const createOfferSelectorsTemplate = ({type, offers}) => {
   }).join(`\n`);
 };
 
-const createOffersTemplate = (offersObject) => {
+const createOffersTemplate = (offersObject, offersNames) => {
   const {offers} = offersObject;
   if (offers.length === 0) {
     return ``;
   }
 
-  const offerSelectorsTemplate = createOfferSelectorsTemplate(offersObject);
+  const offerSelectorsTemplate = createOfferSelectorsTemplate(offersObject, offersNames);
+
   return (
     `<section class="event__section  event__section--offers">
       <h3 class="event__section-title  event__section-title--offers">Offers</h3>
@@ -143,12 +143,20 @@ const createEventDetails = (offers, destination) => {
   return ``;
 };
 
+const getOffersNames = (offers) => {
+  if (offers.length === 0) {
+    return [];
+  }
+
+  return offers.map((offer) => offer.title);
+};
+
 export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventName, newDestination, externalData}) => {
   const destinations = eventsModel.getDestinations();
   const modelOffers = eventsModel.getOffers();
 
   const isCreateMode = mode === EventControllerMode.CREATE ? true : false;
-  const {eventName: name, destination: dest, images, startDate, endDate, price, isFavorite} = eventItem;
+  const {eventName: name, destination: dest, images, offers, startDate, endDate, price, isFavorite} = eventItem;
   const eventName = newEventName ? newEventName : name;
   const destinationName = newDestination ? newDestination : dest;
   const pictures = destinationName ? findDestination(destinations, destinationName).images : [];
@@ -159,7 +167,8 @@ export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventN
   const description = destinationName ? descriptionText : ``;
   const destinationDescriptionTemplate = createDestinationDescTemplate(description, destinationImages);
   const offerObject = findOffers(modelOffers, eventName);
-  const offersTemplate = createOffersTemplate(offerObject);
+  const offersNames = getOffersNames(offers);
+  const offersTemplate = createOffersTemplate(offerObject, offersNames);
   const eventNameUpperCase = makeFirstLetterUppercase(eventName);
   const iconName = eventName;
   const startTime = `${getDateTime(startDate, true)} ${formatTime(startDate)}`;
@@ -178,7 +187,7 @@ export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventN
   const eventDetailsTemplate = createEventDetails(offersTemplate, destinationDescriptionTemplate);
 
   return (
-    `<form class="trip-events__item  event  event--edit" action="#" method="post">
+    `<form class="trip-events__item  event  event--edit" action="#" method="post" novalidate>
     <header class="event__header">
       <div class="event__type-wrapper">
         <label class="event__type  event__type-btn" for="event-type-toggle-1">
@@ -229,7 +238,7 @@ export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventN
           <span class="visually-hidden">Price</span>
           €
         </label>
-        <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" value="${price}">
+        <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" value="${price}" min="0">
       </div>
 
       <button class="event__save-btn  btn  btn--blue" type="submit">${saveButtonText}</button>
@@ -262,6 +271,16 @@ export default class EventForm extends AbstractSmartComponent {
 
     this._subscribeOnEvents();
     this._applyFlatpickr();
+  }
+
+  removeElement() {
+    if (this._flatpickr) {
+      this._flatpickr.startDate.destroy();
+      this._flatpickr.endDate.destroy();
+      this._flatpickr = null;
+    }
+
+    super.removeElement();
   }
 
   recoveryListeners() {
@@ -359,12 +378,18 @@ export default class EventForm extends AbstractSmartComponent {
       .addEventListener(`change`, (evt) => {
         const userInput = evt.target.value;
 
+        if (!userInput) {
+          return;
+        }
+
         const destinations = this._eventsModel.getDestinations();
         const destination = findDestination(destinations, userInput);
 
         if (destination) {
           this._newEventDestination = userInput;
           this.rerender();
+        } else {
+          evt.target.value = ``;
         }
       });
   }
@@ -382,7 +407,8 @@ export default class EventForm extends AbstractSmartComponent {
       altFormat: `d/m/Y H:i`,
       enableTime: true,
       // eslint-disable-next-line camelcase
-      time_24hr: true
+      time_24hr: true,
+      plugins: [new LabelPlugin({})]
     };
 
     const startTimeElement = this.getElement().querySelector(`#event-start-time-1`);

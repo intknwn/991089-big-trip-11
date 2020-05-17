@@ -17,6 +17,10 @@ export default class EventsModel {
   }
 
   getEvents() {
+    if (this._events.length === 0) {
+      return [];
+    }
+
     const events = addDayProperty(this._events);
     const filteredEvents = getFilteredEvents(events, this._activeFilter);
     const sortedEvents = sortEvents(filteredEvents, this._activeSort);
@@ -67,6 +71,8 @@ export default class EventsModel {
     }
 
     this._events = [...this._events.slice(0, index), newEvent, ...this._events.slice(index + 1)];
+
+    this._callHandlers(this._dataChangeHandlers);
 
     return true;
   }

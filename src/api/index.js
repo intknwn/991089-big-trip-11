@@ -1,11 +1,12 @@
-import Event from './models/event.js';
-import Destination from './models/destination.js';
-import Offer from './models/offer.js';
+import Event from '../models/event.js';
+import Destination from '../models/destination.js';
+import Offer from '../models/offer.js';
 
 const URL = {
   EVENTS: `points`,
   DESTINATIONS: `destinations`,
   OFFERS: `offers`,
+  SYNC: `points/sync`
 };
 
 const Method = {
@@ -37,6 +38,16 @@ export default class API {
       .catch((err) => {
         throw err;
       });
+  }
+
+  sync(data) {
+    return this._load({
+      url: URL.SYNC,
+      method: Method.POST,
+      body: JSON.stringify(data),
+      headers: new Headers({"Content-Type": `application/json`})
+    })
+      .then((response) => response.json());
   }
 
   updateEvent(id, data) {
