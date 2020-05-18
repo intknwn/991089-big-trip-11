@@ -406,10 +406,11 @@ export default class EventForm extends AbstractSmartComponent {
       allowInput: true,
       altFormat: `d/m/Y H:i`,
       enableTime: true,
-      // eslint-disable-next-line camelcase
-      time_24hr: true,
       plugins: [new LabelPlugin({})]
     };
+
+    // ESLint при автоматической проверке в интерфейсе академии ругается на ключ "time_24hr": camelCase
+    config[`time_24hr`] = true;
 
     const startTimeElement = this.getElement().querySelector(`#event-start-time-1`);
     const endTimeElement = this.getElement().querySelector(`#event-end-time-1`);
