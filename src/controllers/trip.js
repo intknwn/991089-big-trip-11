@@ -1,8 +1,8 @@
 import TripDaysItemComponent from '../components/trip-days-item.js';
-import EventController, {Mode as EventControllerMode, EmptyEvent} from './event.js';
+import EventController, {Mode as EventControllerMode, EmptyEvent, Mode} from './event.js';
 import SortController from './sort.js';
 import FiltersController from './filter';
-import NoEventsComponent from '../components/no-events.js';
+import MessageComponent from '../components/message.js';
 import {render, RenderPosition, remove} from '../utils/render.js';
 import {createSortedByDateObject} from '../utils/common.js';
 import {SortName} from '../const.js';
@@ -14,7 +14,8 @@ export default class TripController {
     this._api = api;
     this._shownEventControllers = [];
     this._shownTripDaysItemComponents = [];
-    this._noEventsComponent = null;
+    this._messageComponent = null;
+    this._menuComponent = null;
     this._newEvent = null;
     this._activeSort = SortName.EVENT;
 
@@ -22,6 +23,7 @@ export default class TripController {
     this._filtersController = null;
 
     this._addEventButton = null;
+    this._onEscKeyDown = this._onEscKeyDown.bind(this);
 
     this._onDataChange = this._onDataChange.bind(this);
     this._onViewChange = this._onViewChange.bind(this);
@@ -39,9 +41,8 @@ export default class TripController {
 
   _onDataChange(eventController, oldData, newData) {
     if (newData === EmptyEvent) {
-      this._newEvent = null;
-      this._addEventButton.disabled = false;
-      eventController.destroy();
+      this.closeNewEventForm();
+      this._updateEvents();
     } else if (newData === null) {
       this._api.deleteEvent(oldData.id)
         .then(() => {
@@ -76,7 +77,11 @@ export default class TripController {
             const isSuccess = this._eventsModel.updateEvent(oldData.id, newData);
 
             if (isSuccess) {
-              eventController.render(event, controllerMode);
+              if (controllerMode === Mode.UPDATE) {
+                eventController.render(event, controllerMode);
+              } else {
+                this._updateEvents();
+              }
             }
           })
           .catch(() => {
@@ -88,9 +93,7 @@ export default class TripController {
 
   _onViewChange() {
     if (this._newEvent) {
-      this._newEvent.destroy();
-      this._newEvent = null;
-      this._addEventButton.disabled = false;
+      this.closeNewEventForm();
     }
     this._shownEventControllers.forEach((controller) => controller.setDefaultView());
   }
@@ -98,11 +101,15 @@ export default class TripController {
   render() {
     const events = this._eventsModel.getEvents();
     const containerElement = this._container.getElement();
+
     if (events.length === 0) {
-      this._noEventsComponent = new NoEventsComponent();
-      render(containerElement, this._noEventsComponent, RenderPosition.BEFOREEND);
+      this._messageComponent = new MessageComponent();
+      render(containerElement, this._messageComponent, RenderPosition.BEFOREEND);
+      this._messageComponent.createNoEventsMessage();
       return;
     }
+
+    this._sortController.show();
 
     const eventsByDate = createSortedByDateObject(events);
     const sortedByDateKeys = Object.keys(eventsByDate).sort();
@@ -151,9 +158,12 @@ export default class TripController {
     if (this._newEvent) {
       return;
     }
-    this._sortController.destroy();
+
     this._filtersController.setDefaultFilter();
+    this._sortController.destroy();
+
     this._onViewChange();
+    this._removeMessageComponent();
 
     const tripEventsElement = document.querySelector(`.trip-events`);
 
@@ -172,20 +182,21 @@ export default class TripController {
     this._shownTripDaysItemComponents = [];
   }
 
-  _removeNoEventsComponent() {
-    if (this._noEventsComponent) {
-      remove(this._noEventsComponent);
+  _removeMessageComponent() {
+    if (this._messageComponent) {
+      remove(this._messageComponent);
     }
   }
 
   _updateEvents() {
     this._removeEvents();
     this._removeTripDaysComponents();
-    this._removeNoEventsComponent();
+    this._removeMessageComponent();
     this.render();
   }
 
   _onFilterChange() {
+    this._sortController.setDefault();
     this._updateEvents();
   }
 
@@ -198,6 +209,7 @@ export default class TripController {
     const tripEventsElement = document.querySelector(`.trip-events`);
     this._sortController = new SortController(tripEventsElement, this._eventsModel);
     this._sortController.render();
+    this._sortController.hide();
   }
 
   _createFiltersController() {
@@ -210,8 +222,31 @@ export default class TripController {
     this._addEventButton = document.querySelector(`.trip-main__event-add-btn`);
     this._addEventButton.addEventListener(`click`, (evt) => {
       evt.target.disabled = true;
+      this._menuComponent.switchToTableView();
       this.createEvent();
+      document.addEventListener(`keydown`, this._onEscKeyDown);
     });
+  }
+
+  closeNewEventForm() {
+    if (!this._newEvent) {
+      return;
+    }
+
+    this._newEvent.destroy();
+    this._newEvent = null;
+    this._addEventButton.disabled = false;
+    document.removeEventListener(`keydown`, this._onEscKeyDown);
+  }
+
+  _onEscKeyDown(evt) {
+    if (evt.key === `Escape` || evt.key === `Esc`) {
+      this.closeNewEventForm();
+    }
+  }
+
+  setMenuComponent(component) {
+    this._menuComponent = component;
   }
 
   hide() {

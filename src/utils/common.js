@@ -51,8 +51,8 @@ export const createPreposition = (eventType) => {
 
 export const makeFirstLetterUppercase = ([first, ...rest]) => [first.toUpperCase(), ...rest].join(``);
 
-export const addDayProperty = (eventsArray) => {
-  const obj = createSortedByDateObject(eventsArray);
+export const addDayProperty = (events) => {
+  const obj = createSortedByDateObject(events);
 
   return Object.keys(obj)
     .sort()

@@ -146,6 +146,7 @@ export default class Statistics extends AbstractSmartComponent {
   constructor(eventsModel) {
     super();
     this._eventsModel = eventsModel;
+
     this._moneyChart = null;
     this._transportChart = null;
     this._timeSpentChart = null;
@@ -156,6 +157,8 @@ export default class Statistics extends AbstractSmartComponent {
   }
 
   renderCharts() {
+    this._resetCharts();
+
     const events = this._eventsModel.getEvents();
     const data = parseData(events);
     const sortedByMoney = data.slice().sort((a, b) => b.price - a.price);
@@ -204,5 +207,22 @@ export default class Statistics extends AbstractSmartComponent {
     this._moneyChart = createChart(moneyChartConfig);
     this._transportChart = createChart(transportChartConfig);
     this._timeSpentChart = createChart(timeChartConfig);
+  }
+
+  _resetCharts() {
+    if (this._moneyChart) {
+      this._moneyChart.destroy();
+      this._moneyChart = null;
+    }
+
+    if (this._transportChart) {
+      this._transportChart.destroy();
+      this._transportChart = null;
+    }
+
+    if (this._timeSpentChart) {
+      this._timeSpentChart.destroy();
+      this._timeSpentChart = null;
+    }
   }
 }

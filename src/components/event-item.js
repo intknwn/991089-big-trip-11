@@ -1,8 +1,11 @@
 import {formatTime, getDateTime, getFormattedDuration, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
 import AbstractComponent from './abstract-component.js';
 
-const createOffersTemplate = (offers) =>
-  offers.map(({title, price}) => {
+const MAX_OFFERS_TO_SHOW = 3;
+
+const createOffersTemplate = (offers) => {
+  const lastIndex = MAX_OFFERS_TO_SHOW;
+  return offers.slice(0, lastIndex).map(({title, price}) => {
     return (
       `<li class="event__offer">
       <span class="event__offer-title">${title}</span>
@@ -11,6 +14,7 @@ const createOffersTemplate = (offers) =>
      </li>`
     );
   }).join(`\n`);
+};
 
 export const createEventItemTemplate = (eventItem) => {
   const {eventName, eventType, destination, offers, startDate, endDate, price} = eventItem;

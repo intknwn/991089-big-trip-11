@@ -9,10 +9,7 @@ export default class SortController {
     this._sortComponent = null;
     this._activeSort = SortName.EVENT;
 
-    this._onDataChange = this._onDataChange.bind(this);
     this._onSortChange = this._onSortChange.bind(this);
-
-    this._eventsModel.setDataChangeHandler(this._onDataChange);
   }
 
   render() {
@@ -39,10 +36,6 @@ export default class SortController {
     this._eventsModel.setSort(sortName);
   }
 
-  _onDataChange() {
-    this.render();
-  }
-
   setDefault() {
     this._activeSort = SortName.EVENT;
     this._eventsModel.setSort(this._activeSort);
@@ -60,6 +53,8 @@ export default class SortController {
   }
 
   show() {
-    this._sortComponent.show();
+    if (this._sortComponent) {
+      this._sortComponent.show();
+    }
   }
 }
