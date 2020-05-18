@@ -21,31 +21,30 @@ const api = new API(AUTHORIZATION, URL);
 const store = new Store(STORE_NAME, window.localStorage);
 const apiWithProvider = new Provider(api, store);
 
-const NO_EVENTS = [];
 const eventsModel = new EventsModel();
 
 const tripMainElement = document.querySelector(`.trip-main`);
-render(tripMainElement, new TripInfoComponent(eventsModel), RenderPosition.AFTERBEGIN);
-
 const tripControlsElement = tripMainElement.querySelector(`.trip-controls`);
-const menuComponent = new MenuComponent();
-render(tripControlsElement, menuComponent, RenderPosition.AFTERBEGIN);
-
 const tripEventsElement = document.querySelector(`.trip-events`);
 
-const messageElement = new MessageComponent();
-render(tripEventsElement, messageElement, RenderPosition.AFTERBEGIN);
-messageElement.createLoadingMessage();
-
+const menuComponent = new MenuComponent();
+const messageComponent = new MessageComponent();
 const tripDaysListComponent = new TripDaysListComponent();
-render(tripEventsElement, tripDaysListComponent, RenderPosition.AFTERBEGIN);
+const statsComponent = new StatsComponent(eventsModel);
+const tripInfoComponent = new TripInfoComponent(eventsModel);
 
 const tripController = new TripController(tripDaysListComponent, eventsModel, apiWithProvider);
 tripController.setMenuComponent(menuComponent);
+tripController.setMenuComponent(menuComponent);
 
-const statsComponent = new StatsComponent(eventsModel);
+render(tripMainElement, tripInfoComponent, RenderPosition.AFTERBEGIN);
+render(tripControlsElement, menuComponent, RenderPosition.AFTERBEGIN);
+render(tripEventsElement, messageComponent, RenderPosition.AFTERBEGIN);
+render(tripEventsElement, tripDaysListComponent, RenderPosition.AFTERBEGIN);
 render(tripEventsElement, statsComponent, RenderPosition.AFTERBEGIN);
+
 statsComponent.hide();
+messageComponent.createLoadingMessage();
 
 menuComponent.setOnChange((menuItem) => {
   const elements = document.querySelectorAll(`.page-body__container`);
@@ -73,7 +72,7 @@ apiWithProvider.getDestinations()
     eventsModel.setDestinations(destinations);
   })
   .catch((err) => {
-    messageElement.createDestinationsErrorMessage();
+    messageComponent.createDestinationsErrorMessage();
     throw err;
   })
   .then(() => apiWithProvider.getOffers())
@@ -81,17 +80,17 @@ apiWithProvider.getDestinations()
     eventsModel.setOffers(offers);
   })
   .catch((err) => {
-    messageElement.createOffersErrorMessage();
+    messageComponent.createOffersErrorMessage();
     throw err;
   })
   .then(() => {
     return apiWithProvider.getEvents();
   })
-  .catch(() => {
-    return NO_EVENTS;
+  .catch((err) => {
+    throw err;
   })
   .then((events) => {
-    remove(messageElement);
+    remove(messageComponent);
     eventsModel.setEvents(events);
     tripController.render();
   });
