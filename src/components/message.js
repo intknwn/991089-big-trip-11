@@ -8,35 +8,33 @@ export const createMessageTemplate = (message, isErrorMessage) => {
 export default class Message extends AbstractSmartComponent {
   constructor() {
     super();
-    this._message = ``;
-    this._isErrorMessage = false;
+    this._text = ``;
+    this._isError = false;
   }
 
   getTemplate() {
-    return createMessageTemplate(this._message, this._isErrorMessage);
+    return createMessageTemplate(this._text, this._isError);
   }
 
-  createLoadingMessage() {
-    this._message = `Loading...`;
+  createLoading() {
+    this._text = `Loading...`;
     super.rerender();
   }
 
-  createNoEventsMessage() {
-    this._message = `Click New Event to create your first point`;
+  createNoEvents() {
+    this._text = `Click New Event to create your first point`;
     super.rerender();
   }
 
-  createDestinationsErrorMessage() {
-    this._message = `Couldn't load destinations.<br>Try to reload the page.`;
-    this._isErrorMessage = true;
+  createDestinationsError() {
+    this._text = `Couldn't load destinations.<br>Try to reload the page.`;
+    this._isError = true;
     super.rerender();
   }
 
-  createOffersErrorMessage() {
-    this._message = `Couldn't load offers.<br>Try to reload the page.`;
-    this._isErrorMessage = true;
+  createOffersError() {
+    this._text = `Couldn't load offers.<br>Try to reload the page.`;
+    this._isError = true;
     super.rerender();
   }
-
-  recoveryListeners() {}
 }

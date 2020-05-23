@@ -1,16 +1,16 @@
 import TripInfoComponent from './components/trip-info.js';
 import MenuComponent, {MenuItem} from './components/menu.js';
-import TripDaysListComponent from './components/trip-days.js';
+import TripDaysListComponent from './components/trip-days-list.js';
 import MessageComponent from './components/message.js';
 import StatsComponent from './components/stats.js';
 import TripController from './controllers/trip';
 import EventsModel from './models/events.js';
 import {render, remove, RenderPosition} from './utils/render.js';
-import API from './api';
+import API from './api/api.js';
 import Store from './api/store.js';
 import Provider from './api/provider.js';
 
-const AUTHORIZATION = `Basic DJHskh2afJ9HSFSUAoy4`;
+const AUTHORIZATION = `Basic DJHskh28934jjHSFSUAoy4`;
 const URL = `https://11.ecmascript.pages.academy/big-trip`;
 
 const STORE_PREFIX = `bigtrip-localstorage`;
@@ -33,18 +33,17 @@ const tripDaysListComponent = new TripDaysListComponent();
 const statsComponent = new StatsComponent(eventsModel);
 const tripInfoComponent = new TripInfoComponent(eventsModel);
 
-const tripController = new TripController(tripDaysListComponent, eventsModel, apiWithProvider);
-tripController.setMenuComponent(menuComponent);
-tripController.setMenuComponent(menuComponent);
-
 render(tripMainElement, tripInfoComponent, RenderPosition.AFTERBEGIN);
 render(tripControlsElement, menuComponent, RenderPosition.AFTERBEGIN);
 render(tripEventsElement, messageComponent, RenderPosition.AFTERBEGIN);
 render(tripEventsElement, tripDaysListComponent, RenderPosition.AFTERBEGIN);
 render(tripEventsElement, statsComponent, RenderPosition.AFTERBEGIN);
 
+const tripController = new TripController(tripDaysListComponent, eventsModel, apiWithProvider);
+tripController.setMenuComponent(menuComponent);
+
 statsComponent.hide();
-messageComponent.createLoadingMessage();
+messageComponent.createLoading();
 
 menuComponent.setOnChange((menuItem) => {
   const elements = document.querySelectorAll(`.page-body__container`);
@@ -72,7 +71,7 @@ apiWithProvider.getDestinations()
     eventsModel.setDestinations(destinations);
   })
   .catch((err) => {
-    messageComponent.createDestinationsErrorMessage();
+    messageComponent.createDestinationsError();
     throw err;
   })
   .then(() => apiWithProvider.getOffers())
@@ -80,7 +79,7 @@ apiWithProvider.getDestinations()
     eventsModel.setOffers(offers);
   })
   .catch((err) => {
-    messageComponent.createOffersErrorMessage();
+    messageComponent.createOffersError();
     throw err;
   })
   .then(() => {

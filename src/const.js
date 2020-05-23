@@ -1,4 +1,4 @@
-export const months = {
+export const Months = {
   0: `JAN`,
   1: `FEB`,
   2: `MAR`,
@@ -23,4 +23,17 @@ export const SortName = {
   EVENT: `event`,
   TIME: `time`,
   PRICE: `price`,
+};
+
+export const EventType = {
+  'TAXI': `move`,
+  'BUS': `move`,
+  'TRAIN': `move`,
+  'SHIP': `move`,
+  'TRANSPORT': `move`,
+  'DRIVE': `move`,
+  'FLIGHT': `move`,
+  'CHECK-IN': `stop`,
+  'SIGHTSEEING': `stop`,
+  'RESTAURANT': `stop`,
 };

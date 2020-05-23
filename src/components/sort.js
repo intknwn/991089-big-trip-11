@@ -34,51 +34,51 @@ export const createSortingTemplate = (sorts, current) => {
   );
 };
 
-export default class Sorting extends AbstractSmartComponent {
-  constructor(sorts) {
+export default class Sort extends AbstractSmartComponent {
+  constructor(configs) {
     super();
-    this._sorts = sorts;
-    this._currentSort = SortName.EVENT;
-    this._updateSort = this._updateSort.bind(this);
-    this._sortChangeHandler = null;
+    this._configs = configs;
+    this._current = SortName.EVENT;
+    this._update = this._update.bind(this);
+    this._changeHandler = null;
   }
 
   getTemplate() {
-    return createSortingTemplate(this._sorts, this._currentSort);
+    return createSortingTemplate(this._configs, this._current);
   }
 
-  setSortChangeHandler(handler) {
+  setChangeHandler(handler) {
     this.getElement().addEventListener(`change`, (evt) => {
       const targetValue = evt.target.value;
       const prefix = `sort-`;
       const sortValue = targetValue.substr(prefix.length);
 
-      if (this._currentSort === sortValue) {
+      if (this._current === sortValue) {
         return;
       }
 
-      this._currentSort = sortValue;
+      this._current = sortValue;
 
-      handler(this._currentSort);
-      this._updateSort();
+      handler(this._current);
+      this._update();
     });
 
-    this._sortChangeHandler = handler;
+    this._changeHandler = handler;
   }
 
-  _sortUpdate() {
-    this._sorts.forEach((sort) => {
-      sort.isChecked = sort.name === this._currentSort;
+  _updateConfigs() {
+    this._configs.forEach((sort) => {
+      sort.isChecked = sort.name === this._current;
     });
   }
 
-  _updateSort() {
-    this._sortUpdate();
+  _update() {
+    this._updateConfigs();
     super.rerender();
     this.recoveryListeners();
   }
 
   recoveryListeners() {
-    this.setSortChangeHandler(this._sortChangeHandler);
+    this.setChangeHandler(this._changeHandler);
   }
 }

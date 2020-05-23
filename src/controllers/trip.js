@@ -105,7 +105,7 @@ export default class TripController {
     if (events.length === 0) {
       this._messageComponent = new MessageComponent();
       render(containerElement, this._messageComponent, RenderPosition.BEFOREEND);
-      this._messageComponent.createNoEventsMessage();
+      this._messageComponent.createNoEvents();
       return;
     }
 
@@ -133,7 +133,6 @@ export default class TripController {
       render(containerElement, tripDaysItemComponent, RenderPosition.BEFOREEND);
       this._shownTripDaysItemComponents.push(tripDaysItemComponent);
     }
-
   }
 
   _createDayItemComponent(events, counter, date) {

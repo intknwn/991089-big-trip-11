@@ -17,16 +17,16 @@ const createOffersTemplate = (offers) => {
 };
 
 export const createEventItemTemplate = (eventItem) => {
-  const {eventName, eventType, destination, offers, startDate, endDate, price} = eventItem;
-  const eventNameUpperCase = makeFirstLetterUppercase(eventName);
-  const iconName = eventName;
+  const {name, destination, offers, startDate, endDate, price} = eventItem;
+  const nameUpperCase = makeFirstLetterUppercase(name);
+  const iconName = name;
   const duration = getFormattedDuration(startDate, endDate);
   const startDateTime = getDateTime(startDate);
   const endDateTime = getDateTime(endDate);
   const startTime = formatTime(startDate);
   const endTime = formatTime(endDate);
   const offersTemplate = createOffersTemplate(offers);
-  const preposition = createPreposition(eventType);
+  const preposition = createPreposition(name);
 
 
   return (
@@ -35,7 +35,7 @@ export const createEventItemTemplate = (eventItem) => {
       <div class="event__type">
         <img class="event__type-icon" width="42" height="42" src="img/icons/${iconName}.png" alt="Event type icon">
       </div>
-      <h3 class="event__title">${eventNameUpperCase} ${preposition} ${destination}</h3>
+      <h3 class="event__title">${nameUpperCase} ${preposition} ${destination}</h3>
 
       <div class="event__schedule">
         <p class="event__time">
@@ -64,13 +64,13 @@ export const createEventItemTemplate = (eventItem) => {
 };
 
 export default class EventItem extends AbstractComponent {
-  constructor(eventItem) {
+  constructor(event) {
     super();
-    this._eventItem = eventItem;
+    this._event = event;
   }
 
   getTemplate() {
-    return createEventItemTemplate(this._eventItem);
+    return createEventItemTemplate(this._event);
   }
 
   setClickHandler(handler) {

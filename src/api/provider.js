@@ -1,4 +1,6 @@
 import Event from '../models/event.js';
+import Destination from '../models/destination.js';
+import Offer from '../models/offer.js';
 import {nanoid} from 'nanoid';
 
 const isOnline = () => {
@@ -31,22 +33,22 @@ export default class Provider {
         .then((events) => {
           const items = createStoreStructure(events.map((event) => event.toRAW()));
 
-          this._store.setItems(items);
+          this._store.setEvents(items);
 
           return events;
         });
     }
 
-    const storeEvents = Object.values(this._store.getItems());
+    const {events} = this._store.getItems();
 
-    return Promise.resolve(Event.parseEvents(storeEvents));
+    return Promise.resolve(Event.parseAll(Object.values(events)));
   }
 
   createEvent(data) {
     if (isOnline()) {
       return this._api.createEvent(data)
         .then((newEvent) => {
-          this._store.setItem(newEvent.id, newEvent.toRAW());
+          this._store.setEvent(newEvent.id, newEvent.toRAW());
 
           return newEvent;
         });
@@ -56,7 +58,7 @@ export default class Provider {
     const newLocalEventId = nanoid();
     const newLocalEvent = Event.clone(Object.assign(data, {id: newLocalEventId}));
 
-    this._store.setItem(newLocalEvent.id, newLocalEvent.toRAW());
+    this._store.setEvent(newLocalEvent.id, newLocalEvent.toRAW());
 
     return Promise.resolve(newLocalEvent);
   }
@@ -65,7 +67,7 @@ export default class Provider {
     if (isOnline()) {
       return this._api.updateEvent(id, data)
         .then((newEvent) => {
-          this._store.setItem(newEvent.id, newEvent.toRAW());
+          this._store.setEvent(newEvent.id, newEvent.toRAW());
 
           return newEvent;
         });
@@ -73,7 +75,7 @@ export default class Provider {
 
     this._synced = false;
     const localEvent = Event.clone(Object.assign(data, {id}));
-    this._store.setItem(id, localEvent.toRAW());
+    this._store.setEvent(id, localEvent.toRAW());
 
     return Promise.resolve(localEvent);
   }
@@ -81,21 +83,43 @@ export default class Provider {
   deleteEvent(id) {
     if (isOnline()) {
       return this._api.deleteEvent(id)
-        .then(() => this._store.removeItem(id));
+        .then(() => this._store.removeEvent(id));
     }
 
     this._synced = false;
-    this._store.removeItem(id);
+    this._store.removeEvent(id);
 
     return Promise.resolve();
   }
 
   getDestinations() {
-    return this._api.getDestinations();
+    if (isOnline()) {
+      return this._api.getDestinations()
+        .then((destinations) => {
+          this._store.setDestinations(destinations.map((destination) => destination.toRAW()));
+
+          return destinations;
+        });
+    }
+
+    const {destinations} = this._store.getItems();
+
+    return Promise.resolve(Destination.parseAll(destinations));
   }
 
   getOffers() {
-    return this._api.getOffers();
+    if (isOnline()) {
+      return this._api.getOffers()
+        .then((offers) => {
+          this._store.setOffers(offers);
+
+          return offers;
+        });
+    }
+
+    const {offers} = this._store.getItems();
+
+    return Promise.resolve(Offer.parseAll(offers));
   }
 
   isSynced() {
@@ -104,16 +128,19 @@ export default class Provider {
 
   sync() {
     if (isOnline()) {
-      const storeEvents = Object.values(this._store.getItems());
+      const {events} = this._store.getItems();
+      const values = Object.values(events);
 
-      return this._api.sync(storeEvents)
+      return this._api.sync(values)
         .then((response) => {
           const createdEvents = getSyncedEvents(response.created);
           const updatedEvents = getSyncedEvents(response.updated);
 
-          const items = createStoreStructure([...createdEvents, ...updatedEvents]);
+          const syncedEvents = createStoreStructure([...createdEvents, ...updatedEvents]);
 
-          this._store.setItems(items);
+          this._store.setEvents(syncedEvents);
+
+          this._synced = true;
         });
     }
 

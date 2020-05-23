@@ -1,3 +1,4 @@
+import {EventType} from '../const.js';
 import moment from 'moment';
 import momentDurationFormatSetup from 'moment-duration-format';
 momentDurationFormatSetup(moment);
@@ -41,8 +42,8 @@ export const createSortedByDateObject = (events) => {
   }, {});
 };
 
-export const createPreposition = (eventType) => {
-  if (eventType === `stop`) {
+export const createPreposition = (eventName) => {
+  if (EventType[eventName.toUpperCase()] === `stop`) {
     return `in`;
   }
 

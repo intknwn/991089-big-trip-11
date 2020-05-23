@@ -54,13 +54,14 @@ const createDates = (events) => {
   const lastEvent = events[events.length - 1];
 
   const startDate = moment(firstEvent.startDate);
-  const endDate = moment(lastEvent.startDate);
+  const endDate = moment(lastEvent.endDate);
 
-  if (events.length === 1) {
+  const isSameDay = startDate.isSame(endDate.toDate(), `day`);
+  const isSameMonth = startDate.isSame(endDate.toDate(), `month`);
+
+  if (isSameDay) {
     return startDate.format(`MMM D`);
   }
-
-  const isSameMonth = startDate.month() === endDate.month();
 
   if (isSameMonth) {
     return `${startDate.format(`MMM D`)}&nbsp;—&nbsp;${endDate.format(`D`)}`;
@@ -97,8 +98,6 @@ export default class TripInfo extends AbstractSmartComponent {
 
     this._eventsModel.setDataChangeHandler(this._rerender);
   }
-
-  recoveryListeners() {}
 
   getTemplate() {
     const events = this._eventsModel.getEvents();

@@ -1,21 +1,7 @@
-const EventType = {
-  'taxi': `move`,
-  'bus': `move`,
-  'train': `move`,
-  'ship': `move`,
-  'transport': `move`,
-  'drive': `move`,
-  'flight': `move`,
-  'check-in': `stop`,
-  'sightseeing': `stop`,
-  'restaurant': `stop`,
-};
-
 export default class Event {
   constructor(data) {
     this.id = data[`id`];
-    this.eventName = data[`type`];
-    this.eventType = EventType[this.eventName];
+    this.name = data[`type`];
     this.destination = data[`destination`][`name`];
     this.description = data[`destination`][`description`];
     this.images = data[`destination`][`pictures`];
@@ -39,16 +25,16 @@ export default class Event {
       'id': this.id,
       'is_favorite': this.isFavorite,
       'offers': this.offers,
-      'type': this.eventName,
+      'type': this.name,
     };
   }
 
-  static parseEvent(data) {
+  static parse(data) {
     return new Event(data);
   }
 
-  static parseEvents(data) {
-    return data.map(Event.parseEvent);
+  static parseAll(data) {
+    return data.map(Event.parse);
   }
 
   static clone(data) {

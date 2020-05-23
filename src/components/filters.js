@@ -24,47 +24,47 @@ export const createFiltersTemplate = (filters) => {
 };
 
 export default class Filters extends AbstractSmartComponent {
-  constructor(filters) {
+  constructor(configs) {
     super();
-    this._filters = filters;
-    this._currentFilter = FilterName.EVERYTHING;
-    this._filterChangeHandler = null;
+    this._configs = configs;
+    this._current = FilterName.EVERYTHING;
+    this._changeHandler = null;
   }
 
   getTemplate() {
-    return createFiltersTemplate(this._filters);
+    return createFiltersTemplate(this._configs);
   }
 
-  setFilterChangeHandler(handler) {
+  setChangeHandler(handler) {
     this.getElement().addEventListener(`change`, (evt) => {
       const filterName = evt.target.value;
 
-      if (this._currentFilter === filterName) {
+      if (this._current === filterName) {
         return;
       }
 
-      this._currentFilter = filterName;
+      this._current = filterName;
 
-      handler(this._currentFilter);
-      this._updateFilters();
+      handler(this._current);
+      this._update();
     });
 
-    this._filterChangeHandler = handler;
+    this._changeHandler = handler;
   }
 
   _setChecked() {
-    this._filters.forEach((filter) => {
-      filter.isChecked = filter.name === this._currentFilter;
+    this._configs.forEach((filter) => {
+      filter.isChecked = filter.name === this._current;
     });
   }
 
-  _updateFilters() {
+  _update() {
     this._setChecked();
     super.rerender();
     this.recoveryListeners();
   }
 
   recoveryListeners() {
-    this.setFilterChangeHandler(this._filterChangeHandler);
+    this.setChangeHandler(this._changeHandler);
   }
 }

@@ -22,7 +22,7 @@ export default class SortController {
 
     const oldComponent = this._sortComponent;
     this._sortComponent = new SortComponent(sorts);
-    this._sortComponent.setSortChangeHandler(this._onSortChange);
+    this._sortComponent.setChangeHandler(this._onSortChange);
 
     if (oldComponent) {
       replace(this._sortComponent, oldComponent);

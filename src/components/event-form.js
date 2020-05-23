@@ -1,5 +1,5 @@
-import {formatTime, getDateTime, createPreposition, makeFirstLetterUppercase} from '../utils/common.js';
-import {findDestination, findOffers} from '../utils/common.js';
+import {formatTime, getDateTime, createPreposition, makeFirstLetterUppercase, findDestination, findOffers} from '../utils/common.js';
+import {EventType} from '../const.js';
 import {Mode as EventControllerMode} from '../controllers/event.js';
 import AbstractSmartComponent from './abstract-smart-component.js';
 import flatpickr from "flatpickr";
@@ -7,22 +7,9 @@ import LabelPlugin from 'flatpickr/dist/plugins/labelPlugin/labelPlugin';
 
 import "flatpickr/dist/flatpickr.min.css";
 
-const events = {
-  'taxi': `move`,
-  'bus': `move`,
-  'train': `move`,
-  'ship': `move`,
-  'transport': `move`,
-  'drive': `move`,
-  'flight': `move`,
-  'check-in': `stop`,
-  'sightseeing': `stop`,
-  'restaurant': `stop`,
-};
-
-const DefaultData = {
-  deleteButtonText: `Delete`,
-  saveButtonText: `Save`,
+const DefaultButtonText = {
+  RESET: `Delete`,
+  SAVE: `Save`,
 };
 
 const createDestinationsTemplate = (destItems) => {
@@ -116,7 +103,8 @@ const createRollUpButtonTemplate = () => {
 };
 
 const createEventTypeItems = (eventNames, checkedEventName) => {
-  return eventNames.map((eventName) => {
+  return eventNames.map((name) => {
+    const eventName = name.toLowerCase();
     const checked = eventName === checkedEventName ? `checked` : ``;
     const eventNameUpperCase = makeFirstLetterUppercase(eventName);
 
@@ -151,12 +139,12 @@ const getOffersNames = (offers) => {
   return offers.map((offer) => offer.title);
 };
 
-export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventName, newDestination, externalData}) => {
+export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventName, newDestination}) => {
   const destinations = eventsModel.getDestinations();
   const modelOffers = eventsModel.getOffers();
 
   const isCreateMode = mode === EventControllerMode.CREATE ? true : false;
-  const {eventName: name, destination: dest, images, offers, startDate, endDate, price, isFavorite} = eventItem;
+  const {name, destination: dest, images, offers, startDate, endDate, price, isFavorite} = eventItem;
   const eventName = newEventName ? newEventName : name;
   const destinationName = newDestination ? newDestination : dest;
   const pictures = destinationName ? findDestination(destinations, destinationName).images : [];
@@ -174,16 +162,15 @@ export const createEventFormTemplate = (eventItem, eventsModel, mode, {newEventN
   const startTime = `${getDateTime(startDate, true)} ${formatTime(startDate)}`;
   const endTime = `${getDateTime(endDate, true)} ${formatTime(endDate)}`;
   const destinationsTemplate = createDestinationsTemplate(destinations);
-  const deleteButtonText = externalData.deleteButtonText;
-  const saveButtonText = externalData.saveButtonText;
+  const deleteButtonText = `Delete`;
+  const saveButtonText = `Save`;
   const cancelButtonText = `Cancel`;
   const resetButtonText = isCreateMode ? cancelButtonText : deleteButtonText;
   const addToFavoritesButton = isCreateMode ? `` : createAddToFavoritesButtonTemplate(isFavorite);
   const rollUpButton = isCreateMode ? `` : createRollUpButtonTemplate();
-  const eventTypeString = events[eventName];
-  const preposition = createPreposition(eventTypeString);
-  const transportTypeNames = Object.keys(events).filter((key) => events[key] === `move`);
-  const activityTypeNames = Object.keys(events).filter((key) => events[key] === `stop`);
+  const preposition = createPreposition(eventName);
+  const transportTypeNames = Object.keys(EventType).filter((key) => EventType[key] === `move`);
+  const activityTypeNames = Object.keys(EventType).filter((key) => EventType[key] === `stop`);
   const eventDetailsTemplate = createEventDetails(offersTemplate, destinationDescriptionTemplate);
 
   return (
@@ -265,8 +252,6 @@ export default class EventForm extends AbstractSmartComponent {
     this._addToFavoritesHandler = null;
     this._resetButtonHandler = null;
     this._rollUpButtonHandler = null;
-    this._destinationInputHandler = null;
-    this._externalData = DefaultData;
     this._flatpickr = null;
 
     this._subscribeOnEvents();
@@ -293,6 +278,7 @@ export default class EventForm extends AbstractSmartComponent {
 
   rerender() {
     super.rerender();
+    this.recoveryListeners();
     this._applyFlatpickr();
   }
 
@@ -315,9 +301,24 @@ export default class EventForm extends AbstractSmartComponent {
     return new FormData(form);
   }
 
-  setData(data) {
-    this._externalData = Object.assign({}, DefaultData, data);
-    this.rerender();
+  setSaveButtonText(text) {
+    this
+      .getElement()
+      .querySelector(`.event__save-btn`)
+      .innerText = text;
+
+  }
+
+  setResetButtonText(text) {
+    this
+    .getElement()
+    .querySelector(`.event__reset-btn`)
+    .innerText = text;
+  }
+
+  setDefaultButtonsText() {
+    this.setSaveButtonText(DefaultButtonText.SAVE);
+    this.setResetButtonText(DefaultButtonText.RESET);
   }
 
   setSubmitHandler(handler) {
@@ -406,7 +407,19 @@ export default class EventForm extends AbstractSmartComponent {
       allowInput: true,
       altFormat: `d/m/Y H:i`,
       enableTime: true,
-      plugins: [new LabelPlugin({})]
+      plugins: [new LabelPlugin({})],
+      onReady(dateObj, dateStr, instance) {
+        if (!instance.altInput) {
+          return;
+        }
+
+        instance.__defaultValue = instance.input.defaultValue;
+        instance.altInput.defaultValue = instance.altInput.value;
+        instance.input.form.addEventListener(`reset`, () => {
+          instance.setDate(instance.__defaultValue);
+        }
+        );
+      }
     };
 
     // ESLint при автоматической проверке в интерфейсе академии ругается на ключ "time_24hr": camelCase

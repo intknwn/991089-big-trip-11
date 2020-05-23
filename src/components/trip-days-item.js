@@ -1,8 +1,8 @@
-import {months} from '../const.js';
+import {Months} from '../const.js';
 import AbstractComponent from './abstract-component.js';
 
 const createDayInfoTemplate = (counter, date) => {
-  const monthDayString = `${new Date(date).getDate()} ${months[new Date(date).getMonth()]}`;
+  const monthDayString = `${new Date(date).getDate()} ${Months[new Date(date).getMonth()]}`;
 
   return (`
     <span class="day__counter">${counter}</span>

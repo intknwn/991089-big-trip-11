@@ -15,8 +15,7 @@ export const Mode = {
 
 export const EmptyEvent = {
   id: null,
-  eventName: `ship`,
-  eventType: ``,
+  name: `ship`,
   offers: [],
   destination: ``,
   description: ``,
@@ -25,6 +24,11 @@ export const EmptyEvent = {
   endDate: new Date(),
   price: ``,
   isFavorite: false
+};
+
+const ProcessingButtonText = {
+  SAVE: `Saving...`,
+  RESET: `Deleting...`,
 };
 
 const parseOffers = (formComponent, offers) => {
@@ -114,6 +118,17 @@ export default class EventController {
         destinationInput.setCustomValidity(``);
       }
 
+      const priceInput = form.querySelector(`.event__input--price`);
+      const priceValue = Number(priceInput.value);
+
+      if (!Number.isInteger(priceValue)) {
+        priceInput.setCustomValidity(`Price must be an integer`);
+        form.reportValidity();
+        return;
+      } else {
+        priceInput.setCustomValidity(``);
+      }
+
       const formData = this._eventFormComponent.getData();
       const data = parseFormData(formData, this._eventsModel, this._eventFormComponent);
       data.isFavorite = event.isFavorite;
@@ -130,9 +145,7 @@ export default class EventController {
         endDateInput.setCustomValidity(``);
       }
 
-      this._eventFormComponent.setData({
-        saveButtonText: `Saving...`,
-      });
+      this._eventFormComponent.setSaveButtonText(ProcessingButtonText.SAVE);
 
       this._unsetBorder();
       this._disable();
@@ -152,10 +165,10 @@ export default class EventController {
       this._onDataChange(this, event, newEvent);
     });
 
-    this._eventFormComponent.setResetButtonHandler(() => {
-      this._eventFormComponent.setData({
-        deleteButtonText: `Deleting...`,
-      });
+    this._eventFormComponent.setResetButtonHandler((evt) => {
+      evt.preventDefault();
+
+      this._eventFormComponent.setResetButtonText(ProcessingButtonText.RESET);
 
       this._unsetBorder();
       this._disable();
@@ -203,6 +216,7 @@ export default class EventController {
   }
 
   _replaceFormToEvent() {
+    this._eventFormComponent.getElement().reset();
     replace(this._eventItemComponent, this._eventFormComponent);
     this._mode = Mode.DEFAULT;
   }
@@ -254,10 +268,7 @@ export default class EventController {
   }
 
   _setDefaultButtons() {
-    this._eventFormComponent.setData({
-      saveButtonText: `Save`,
-      deleteButtonText: `Delete`,
-    });
+    this._eventFormComponent.setDefaultButtonsText();
   }
 
   _setBorder() {

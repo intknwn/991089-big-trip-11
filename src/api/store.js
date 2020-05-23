@@ -1,46 +1,82 @@
 export default class Store {
   constructor(key, storage) {
+    this._key = key;
     this._storage = storage;
-    this._storeKey = key;
   }
 
   getItems() {
     try {
-      return JSON.parse(this._storage.getItem(this._storeKey)) || {};
+      return JSON.parse(this._storage.getItem(this._key)) || {};
     } catch (err) {
       return {};
     }
   }
 
-  setItem(key, value) {
+  setEvent(key, value) {
     const store = this.getItems();
+    const storeEvents = store.events || {};
+    const updatedStoreEvents = Object.assign({}, storeEvents, {[key]: value});
 
     this._storage.setItem(
-        this._storeKey,
+        this._key,
         JSON.stringify(
             Object.assign({}, store, {
-              [key]: value
+              events: updatedStoreEvents
             })
         )
     );
   }
 
-  setItems(items) {
+  setEvents(events) {
+    const store = this.getItems();
+    const storeEvents = store.events || [];
+    const updatedStoreEvents = Object.assign({}, storeEvents, events);
+
     this._storage.setItem(
-        this._storeKey,
-        JSON.stringify(items)
+        this._key,
+        JSON.stringify(
+            Object.assign({}, store, {
+              events: updatedStoreEvents
+            })
+        )
     );
   }
 
 
-  removeItem(key) {
+  removeEvent(key) {
     const store = this.getItems();
 
-    delete store[key];
+    delete store.events[key];
 
     this._storage.setItem(
-        this._storeKey,
+        this._key,
         JSON.stringify(store)
+    );
+  }
+
+  setDestinations(destinations) {
+    const store = this.getItems();
+
+    this._storage.setItem(
+        this._key,
+        JSON.stringify(
+            Object.assign({}, store, {
+              destinations: [...destinations]
+            })
+        )
+    );
+  }
+
+  setOffers(offers) {
+    const store = this.getItems();
+
+    this._storage.setItem(
+        this._key,
+        JSON.stringify(
+            Object.assign({}, store, {
+              offers: [...offers]
+            })
+        )
     );
   }
 }

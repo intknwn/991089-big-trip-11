@@ -6,16 +6,16 @@ import {getDuration} from '../utils/common.js';
 const BAR_HEIGHT = 55;
 
 const EmojiMap = {
-  'taxi': `🚕`,
-  'bus': `🚌`,
-  'train': `🚂`,
-  'ship': `🛳`,
-  'transport': `🚊`,
-  'drive': `🚗`,
-  'flight': `✈️`,
-  'check-in': `🏨`,
-  'sightseeing': `🏛`,
-  'restaurant': `🍴`,
+  'TAXI': `🚕`,
+  'BUS': `🚌`,
+  'TRAIN': `🚂`,
+  'SHIP': `🛳`,
+  'TRANSPORT': `🚊`,
+  'DRIVE': `🚗`,
+  'FLIGHT': `✈️`,
+  'CHECK-IN': `🏨`,
+  'SIGHTSEEING': `🏛`,
+  'RESTAURANT': `🍴`,
 };
 
 const createStatisticsTemplate = () => {
@@ -77,7 +77,9 @@ const createChart = ({ctx, titleText, prefix = ``, postfix = ``, labels, data}) 
             padding: 5,
             fontSize: 14,
             callback(value) {
-              return `${EmojiMap[value]} ${value.toUpperCase()}`;
+              const valueInUpperCase = value.toUpperCase();
+
+              return `${EmojiMap[valueInUpperCase]} ${valueInUpperCase}`;
             }
           },
           gridLines: {
@@ -111,13 +113,14 @@ const createChart = ({ctx, titleText, prefix = ``, postfix = ``, labels, data}) 
 const parseData = (events) => {
   const parsedData = events.reduce((acc, event) => {
     const time = getDuration(event.startDate, event.endDate).asHours();
+    const eventName = event.name;
 
-    if (!acc[event.eventName]) {
-      acc[event.eventName] = {price: 0, counter: 0, time: 0};
+    if (!acc[eventName]) {
+      acc[eventName] = {price: 0, counter: 0, time: 0};
     }
-    acc[event.eventName].price += event.price;
-    acc[event.eventName].counter += 1;
-    acc[event.eventName].time += Math.floor(time);
+    acc[eventName].price += event.price;
+    acc[eventName].counter += 1;
+    acc[eventName].time += Math.floor(time);
 
     return acc;
   }, {});
@@ -142,7 +145,7 @@ const getDataObject = (data) => {
   }, {name: [], price: [], counter: [], time: []});
 };
 
-export default class Statistics extends AbstractSmartComponent {
+export default class Stats extends AbstractSmartComponent {
   constructor(eventsModel) {
     super();
     this._eventsModel = eventsModel;
