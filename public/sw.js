@@ -72,6 +72,9 @@ self.addEventListener(`fetch`, (evt) => {
                 .then((cache) => cache.put(request, clonedResponse));
 
               return response;
+            })
+            .catch(() => {
+              return Response.error();
             });
         })
   );
